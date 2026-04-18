@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
         
         int frame = work.get_active_sprite_frame();
         // render.draw(frame);
-        render.draw_volume_level(vol);
+        render.draw_console_volume_level(vol);
     }
 
     return 0;
