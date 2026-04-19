@@ -50,6 +50,8 @@ brew install cmake
 mkdir build
 cd build
 
+#Usage: cmake -G "CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=BUILD_TYPE -DCMAKE_CXX_COMPILER=C++_COMPILER -DCMAKE_C_COMPILER=C_COMPILER ..
+
 # For Visual Studio 2022
 cmake -G "Visual Studio 17 2022" -A x64 ..
 

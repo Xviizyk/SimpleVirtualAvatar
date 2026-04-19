@@ -1,0 +1,72 @@
+#include "Engine.hpp"
+
+bool Engine::init() {
+    if (!renderer.init()) {
+        return false;
+    }
+    
+    if (!audio.init()) {
+        renderer.shutdown();
+        return false;
+    }
+    
+    assets.set_base_path("../../img/");
+    assets.load_avatar_state(AvatarState::IDLE, 1, "idle");
+    assets.load_avatar_state(AvatarState::TALKING, 1, "talk");
+    assets.load_avatar_state(AvatarState::SCREAMING, 1, "scream");
+
+    isRunning = true;
+    return true;
+}
+
+void Engine::process_input() {
+    if (renderer.should_close()) {
+        isRunning = false;
+    }
+
+    sensitivity += input.get_volume_sensitivity_change();
+    
+    if (sensitivity < 0.5f) sensitivity = 0.5f;
+    if (sensitivity > 5.0f) sensitivity = 5.0f;
+    
+    if (input.is_interface_toggled()) {
+        renderer.toggle_ui_visibility();
+    }
+}
+
+void Engine::update() {
+    current_volume = Utils::smooth_volume(current_volume, audio.rms);
+    
+    float final_vol = current_volume * sensitivity;
+    
+    float dt = Utils::get_delta_time();
+    anim.update_blink_timer(dt);
+    
+    if (final_vol < 0.2f) {
+        current_state = AvatarState::IDLE;
+    } else if (final_vol < 0.7f) {
+        current_state = AvatarState::TALKING;
+    } else {
+        current_state = AvatarState::SCREAMING;
+    }
+    
+    renderer.set_avatar_state(current_state);
+}
+
+void Engine::render() {
+    renderer.draw_avatar(assets, current_volume, sensitivity);
+}
+
+void Engine::run() {
+    while (isRunning) {
+        process_input();
+        update();
+        render();
+    }
+}
+
+void Engine::shutdown() {
+    audio.shutdown();
+    assets.clear_all();
+    renderer.shutdown();
+}

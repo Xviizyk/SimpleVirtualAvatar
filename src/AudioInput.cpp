@@ -13,8 +13,7 @@ void AudioInput::data_callback(ma_device* device, void* output, const void* inpu
         sum += samples[i] * samples[i];
     }
 
-    float rms = std::sqrt(sum / frameCount);
-    self->currentVolume = self->currentVolume * 0.9f + rms * 0.1f;
+    self->rms = std::sqrt(sum / frameCount);
 }
 
 bool AudioInput::init() {
@@ -38,10 +37,6 @@ bool AudioInput::init() {
     }
 
     return true;
-}
-
-float AudioInput::get_current_volume() {
-    return currentVolume;
 }
 
 void AudioInput::shutdown() {

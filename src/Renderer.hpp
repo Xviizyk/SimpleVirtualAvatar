@@ -1,18 +1,63 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#pragma once
 
 #include "raylib.h"
+#include "AssetManager.hpp"
+#include <string>
 
 class Renderer {
 private:
-    Texture2D frames[100];
-public:
-    Renderer();
-    ~Renderer();
-    void set_frame(int frame, Texture2D texture);
-    bool init();
-    void draw_frame(int frame);
-    void draw_console_volume_level(float vol);
-};
+    bool is_ui_visible;
+    bool is_blinking;
 
-#endif
+    int window_width;
+    int window_height;
+    int current_frame;
+
+    std::string window_title;
+
+    AvatarState current_state;
+
+    float frame_timer;
+    float blink_timer;
+    
+    static constexpr float FRAME_DURATION = 0.1f;
+    static constexpr float BLINK_DURATION = 0.15f;
+    static constexpr float BLINK_INTERVAL = 3.5f;
+    
+    static constexpr int PADDING = 20;
+    static constexpr int FONT_SIZE = 20;
+    static constexpr int VOLUME_BAR_WIDTH = 200;
+    static constexpr int VOLUME_BAR_HEIGHT = 20;
+    
+    static constexpr Color TEXT_COLOR = {200, 200, 200, 255};
+    static constexpr Color BAR_BG_COLOR = {60, 60, 60, 255};
+    static constexpr Color BAR_FG_COLOR = {100, 200, 100, 255};
+    static constexpr Color BACKGROUND_COLOR = {40, 40, 40, 255};
+    static constexpr Color UI_TIPS_COLOR = {150, 150, 150, 200};
+    
+    void render_ui(float volume, float sensitivity);
+    void render_avatar(AssetManager& assets, const Rectangle& avatar_rect);
+    void update_animation(float delta_time);
+    void render_volume_bar(float volume);
+    void render_tips();
+    void render_fps();
+
+public:
+    Renderer(int width = 1280, int height = 720, const std::string& title = "Simple Virtual Avatar");
+    ~Renderer();
+    bool init();
+    void shutdown();
+    bool should_close() const;
+    void begin_frame();
+    void end_frame();
+    void draw_avatar(AssetManager& assets, float volume, float sensitivity);
+    void toggle_ui_visibility();
+    void set_ui_visibility(bool visible);
+    bool get_ui_visibility() const;
+    void set_avatar_state(AvatarState state);
+    AvatarState get_avatar_state() const;
+    int get_width() const { return window_width; }
+    int get_height() const { return window_height; }
+    void set_window_title(const std::string& title);
+    static Color get_color_by_state(AvatarState state);
+};

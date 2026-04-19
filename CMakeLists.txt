@@ -55,11 +55,21 @@ else()
 endif()
 
 set(PROJECT_SOURCES
-    src/main.cpp 
-    src/AudioHandler.cpp 
-    src/AudioInput.cpp 
-    src/Renderer.cpp 
-    src/miniaudio.cpp
+    src/Animation.cpp
+    src/Animation.hpp
+    src/AssetManager.cpp
+    src/AssetManager.hpp
+    src/AudioInput.cpp
+    src/AudioInput.hpp
+    src/Engine.cpp
+    src/Engine.hpp
+    src/Input.cpp
+    src/Input.hpp
+    src/main.cpp
+    src/Renderer.cpp
+    src/Renderer.hpp
+    src/Utils.cpp
+    src/Utils.hpp
 )
 
 add_executable(SimpleVirtualAvatar ${PROJECT_SOURCES})
