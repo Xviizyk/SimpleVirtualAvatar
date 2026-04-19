@@ -3,18 +3,17 @@
 #include <cmath>
 
 void AudioInput::data_callback(ma_device* device, void* output, const void* input, ma_uint32 frameCount) {
-    AudioInput* self = (AudioInput*)device->pUserData;
+    AudioInput* self = static_cast<AudioInput*>(device->pUserData);
     if (!input) return;
 
-    const float* samples = (const float*)input;
+    const float* samples = static_cast<const float*>(input);
 
     float sum = 0.0f;
-    for (ma_uint32 i = 0; i < frameCount; i++) {
-        float s = samples[i];
-        sum += s * s;
+    for (ma_uint32 i = 0; i < frameCount; ++i) {
+        sum += samples[i] * samples[i];
     }
 
-    float rms = sqrt(sum / frameCount);
+    float rms = std::sqrt(sum / frameCount);
     self->currentVolume = self->currentVolume * 0.9f + rms * 0.1f;
 }
 
@@ -27,13 +26,14 @@ bool AudioInput::init() {
     config.dataCallback = data_callback;
     config.pUserData = this;
 
-    if (ma_device_init(NULL, &config, &device) != MA_SUCCESS) {
-        std::cout << "Failed to init device\n";
+    if (ma_device_init(nullptr, &config, &device) != MA_SUCCESS) {
+        std::cout << "Failed to initialize audio device\n";
         return false;
     }
 
     if (ma_device_start(&device) != MA_SUCCESS) {
-        std::cout << "Failed to start device\n";
+        std::cout << "Failed to start audio device\n";
+        ma_device_uninit(&device);
         return false;
     }
 

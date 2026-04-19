@@ -1,26 +1,42 @@
 #include "AudioHandler.hpp"
+#include "Renderer.hpp"
 
 void AudioHandler::update_blink(float dt) {
-    this->blinkTimer += dt;
-    if (this->blinkTimer > 2.0f) {
-        this->isBlinking = !this->isBlinking;
-        this->blinkTimer = 0.0f;
+    blinkTimer += dt;
+    if (blinkTimer >= 2.0f) {
+        isBlinking = !isBlinking;
+        blinkTimer = 0.0f;
     }
 }
 
 void AudioHandler::update(float vol, float dt) { 
-    this->volume = vol;
+    volume = vol;
     
     update_blink(dt); 
     
-    if (volume > screamThreshold) currentState = State::Screaming;
-    else if (volume > talkThreshold) currentState = State::Talking;
-    else currentState = State::Idle; 
+    if (volume > screamThreshold) {
+        currentState = State::Screaming;
+    } else if (volume > talkThreshold) {
+        currentState = State::Talking;
+    } else {
+        currentState = State::Idle;
+    }
 }
 
 int AudioHandler::get_active_sprite_frame() {
-    if (isBlinking) return 3;
-    return static_cast<int>(currentState);
+    int baseFrame = 0;
+
+    switch (currentState) {
+        case State::Idle:      baseFrame = 0;  break;
+        case State::Talking:   baseFrame = 10; break;
+        case State::Screaming: baseFrame = 60; break;
+    }
+
+    if (isBlinking) {
+        baseFrame += 10;
+    }
+
+    return baseFrame;
 }
 
 bool AudioHandler::is_open() {
@@ -28,5 +44,5 @@ bool AudioHandler::is_open() {
 }
 
 float AudioHandler::get_delta_time() {
-    return 1.0f / 60.0f;
+    return GetFrameTime();
 }
