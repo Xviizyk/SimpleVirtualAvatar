@@ -1,15 +1,15 @@
-# Инструкция по установке SimpleVirtualAvatar
+# SimpleVirtualAvatar Setup Guide
 
-## Требования
+## Requirements
 
-### Windows (MinGW)
+### Windows (MSVC / MinGW)
 - CMake 3.24+
-- MinGW-w64 (GCC 11.0+)
+- Visual Studio 2022 (Recommended) or MinGW-w64 (GCC 11.0+)
 - Git
 
 ### Linux
 - CMake 3.24+
-- GCC/Clang с C++20 поддержкой
+- GCC/Clang with C++20 support
 - Git
 - Development tools: `build-essential`, `libx11-dev`, `libxrandr-dev`, `libxinerama-dev`, `libxcursor-dev`, `libxi-dev`, `libgl1-mesa-dev`
 
@@ -18,54 +18,46 @@
 - Clang (Xcode Command Line Tools)
 - Git
 
-## Установка зависимостей
+## Dependencies Setup
 
-### Windows (MinGW)
+### Cloning Libraries
+Run these commands from the project root:
 
 ```bash
 git clone https://github.com/raysan5/raylib.git external/raylib
 git clone https://github.com/mackron/miniaudio.git external/miniaudio
 ```
 
-### Linux
+### Linux Package Installation
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y build-essential cmake git libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
-
-git clone https://github.com/raysan5/raylib.git external/raylib
-git clone https://github.com/mackron/miniaudio.git external/miniaudio
 ```
 
-### macOS
+### macOS Setup
 
 ```bash
 xcode-select --install
-
 brew install cmake
-
-git clone https://github.com/raysan5/raylib.git external/raylib
-git clone https://github.com/mackron/miniaudio.git external/miniaudio
 ```
 
-## Сборка проекта
+## Building the Project
 
-### Windows (MinGW) 
+### Windows (Visual Studio / Ninja)
 
-```bash
+```powershell
 mkdir build
 cd build
 
-cmake -G "YOUR_CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="YOUR_C++_COMPILER" -DCMAKE_C_COMPILER="YOUR_C_COMPILER" ..
-#Example: cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+# For Visual Studio 2022
+cmake -G "Visual Studio 17 2022" -A x64 ..
 
+# Or for Clang/Ninja
+cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+
+# Build command
 cmake --build . --config Release
-```
-
-Если используется специальный toolchain файл:
-
-```bash
-cmake -G "MinGW Makefiles" -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
 
 ### Linux
@@ -86,80 +78,52 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . -j$(sysctl -n hw.ncpu)
 ```
 
-## Запуск
+## Running the Application
 
-После успешной сборки исполняемый файл будет находиться в:
+Once built, the executable can be found in:
 - **Windows**: `build/Release/SimpleVirtualAvatar.exe`
-- **Linux**: `build/SimpleVirtualAvatar`
-- **macOS**: `build/SimpleVirtualAvatar`
+- **Linux/macOS**: `build/SimpleVirtualAvatar`
 
 ```bash
 ./SimpleVirtualAvatar
 ```
 
-## Решение проблем
+## Troubleshooting
 
-### Ошибка: "external/raylib not found"
+### Error: "external/raylib not found"
+Ensure you have cloned the dependencies into the `external/` folder as described in the Setup section.
 
-Убедитесь, что инициализировали submodules:
+### Windows Build Error: "Rectangle/LoadImage redeclared"
+This is a conflict between Raylib and `windows.h`. Ensure your `Renderer.cpp` uses the fix with `#undef` or specific include ordering.
 
-```bash
-git clone https://github.com/raysan5/raylib.git external/raylib
-git clone https://github.com/mackron/miniaudio.git external/miniaudio
-```
+### Error: "OpenGL not found"
+**Linux:** Install the mesa dev package: `sudo apt-get install libgl1-mesa-dev`.
 
-### Ошибка компиляции на Windows: "Rectangle redeclared"
+### Asset Loading Issues
+Verify that the `img/` directory is located correctly relative to the executable. Check the paths defined in `main.cpp`.
 
-Проверьте, что используется исправленный `Renderer.cpp` с правильным порядком включения заголовков.
-
-### Ошибка: "OpenGL not found"
-
-**Linux:**
-```bash
-sudo apt-get install libgl1-mesa-dev
-```
-
-**macOS:** Обычно встроена в Xcode Command Line Tools.
-
-### Ошибка при загрузке изображений
-
-Убедитесь, что директория `img/` находится в корректном месте относительно исполняемого файла, или измените пути в `main.cpp`.
-
-## Структура проекта
+## Project Structure
 
 ```
 SimpleVirtualAvatar/
-├── CMakeLists.txt          # Конфигурация сборки
+├── CMakeLists.txt          # Build configuration
 ├── src/
-│   ├── main.cpp            # Главная функция
-│   ├── AudioInput.cpp/.hpp  # Захват аудио
-│   ├── AudioHandler.cpp/.hpp # Обработка состояний
-│   ├── Renderer.cpp/.hpp    # Рендеринг окна
-│   └── miniaudio.cpp        # Реализация miniaudio
+│   ├── main.cpp            # Entry point
+│   ├── AudioInput.cpp      # Audio capture (miniaudio wrapper)
+│   ├── AudioHandler.cpp    # State logic & volume processing
+│   ├── Renderer.cpp        # Raylib window & rendering logic
+│   └── miniaudio.cpp       # Miniaudio implementation
 ├── external/
-│   ├── raylib/              # Графическая библиотека
-│   └── miniaudio/           # Аудио библиотека
-└── img/
+│   ├── raylib/             # Graphics library
+│   └── miniaudio/          # Audio library
+└── img/                    # Sprite assets
     ├── idle.png
     ├── speaking.png
-    ├── speaking_blink.png
-    ├── idle_blink.png
-    ├── scream.png
-    └── scream_blink.png
+    └── ...
 ```
 
-## Дополнительные опции CMake
+## CMake Build Options
 
-### Отладочная сборка
-```bash
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-```
-### С оптимизацией
-```bash
-cmake -DCMAKE_BUILD_TYPE=Release ..
-```
-
-### С информацией об отладке в Release
-```bash
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-```
+- **Debug Build:** `cmake -DCMAKE_BUILD_TYPE=Debug ..`
+- **Release Build:** `cmake -DCMAKE_BUILD_TYPE=Release ..`
+- **Release with Symbols:** `cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..`
