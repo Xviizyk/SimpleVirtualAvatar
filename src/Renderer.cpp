@@ -26,7 +26,11 @@ bool Renderer::init() {
     InitWindow(window_width, window_height, window_title.c_str());
 
     int monitor = GetCurrentMonitor();
-    SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
+
+    window_height = GetMonitorHeight(monitor);
+    window_width = GetMonitorWidth(monitor);
+
+    SetWindowSize(window_width, window_height);
     SetWindowPosition(0, 0);
     
     if (!IsWindowReady()) {
@@ -69,14 +73,17 @@ void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity
     
     int avatar_width = 400;
     int avatar_height = 400;
+    int offset = 20;
+
     Rectangle avatar_rect = {
-        (float)(window_width - avatar_width) / 2.0f,
-        (float)(window_height - avatar_height) / 2.0f,
+        (float)(window_width - (avatar_width / 2) - offset), 
+        (float)(window_height - (avatar_height / 2) - offset),
         (float)avatar_width,
         (float)avatar_height
     };
     
     render_avatar(assets, avatar_rect);
+    
     SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
     if (is_ui_visible) {
         render_ui(volume, sensitivity);
