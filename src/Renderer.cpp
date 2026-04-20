@@ -21,7 +21,7 @@ Renderer::~Renderer() {
 }
 
 bool Renderer::init() {
-    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
+    SetConfigFlags(FLAG_WINDOW_ALWAYS_RUN | FLAG_VSYNC_HINT | FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
 
     InitWindow(window_width, window_height, window_title.c_str());
 
@@ -108,8 +108,8 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect)
         DrawRectangleRec(avatar_rect, {80, 80, 80, 255});
         DrawRectangleLinesEx(avatar_rect, 2, {150, 150, 150, 255});
         DrawText("No avatar loaded", 
-                 (int)avatar_rect.x + 50, 
-                 (int)avatar_rect.y + 180, 
+                 (int)avatar_rect.x - 70, 
+                 (int)avatar_rect.y, 
                  FONT_SIZE, 
                  TEXT_COLOR);
     }
