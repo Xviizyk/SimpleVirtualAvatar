@@ -5,29 +5,17 @@
 class Input {
 public:
     bool is_interface_toggled() {
-        return IsKeyPressed(KEY_LEFT_SHIFT) &&
-               IsKeyDown(KEY_LEFT_ALT) && 
-               IsKeyPressed(KEY_D);
-    }
-    
-    bool change_interface_visibility() {
-        return IsKeyDown(KEY_LEFT_SHIFT) &&
-               IsKeyDown(KEY_LEFT_ALT) && 
-               IsKeyDown(KEY_D);
+        return IsKeyPressed(KEY_F11);
     }
 
-    float get_volume_sensitivity_change() {
+    float is_volume_sensitivity_change() {
         return change_volume_sensitivity();
     }
     
     float change_volume_sensitivity() {
-        bool plus = IsKeyPressed(KEY_LEFT_SHIFT) &&
-                    IsKeyDown(KEY_LEFT_ALT) &&
-                    IsKeyPressed(KEY_EQUAL);
+        bool plus = IsKeyPressed(KEY_F9);
         
-        bool minus = IsKeyPressed(KEY_LEFT_SHIFT) &&
-                     IsKeyDown(KEY_LEFT_ALT) &&
-                     IsKeyPressed(KEY_MINUS);
+        bool minus = IsKeyPressed(KEY_F10);
 
         if (minus) return -0.1f;
         else if (plus) return 0.1f;

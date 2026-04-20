@@ -9,16 +9,20 @@
  
 class Engine {
 private:
-    AssetManager assets;
-    AudioInput   audio;
-    Animation    anim;
-    Renderer     renderer;
-    Input        input;
+    static constexpr int IDLE_MAX_FRAMES = 1;
+    static constexpr int TALK_MAX_FRAMES = 1;
+    static constexpr int SCREAM_MAX_FRAMES = 1;
+
+    AssetManager     assets;
+    AudioInput       audio;
+    Animation        anim;
+    Renderer         renderer;
+    Input            input;
     
-    bool         isRunning = false;
-    float        current_volume = 0.0f;
-    float        sensitivity = 3.0f;
-    AvatarState  current_state = AvatarState::IDLE;
+    bool             isRunning = false;
+    float            current_volume = 0.0f;
+    float            sensitivity = 3.0f;
+    AvatarState      current_state = AvatarState::IDLE;
  
     void process_input();
     void update();

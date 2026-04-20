@@ -11,9 +11,11 @@ bool Engine::init() {
     }
     
     assets.set_base_path("../../img/");
-    assets.load_avatar_state(AvatarState::IDLE, 1, "idle");
-    assets.load_avatar_state(AvatarState::TALKING, 1, "talk");
-    assets.load_avatar_state(AvatarState::SCREAMING, 1, "scream");
+    assets.load_avatar_state(AvatarState::IDLE, IDLE_MAX_FRAMES, "idle");
+    assets.load_avatar_state(AvatarState::TALKING, TALK_MAX_FRAMES, "talk");
+    assets.load_avatar_state(AvatarState::SCREAMING, SCREAM_MAX_FRAMES, "scream");
+
+    renderer.set_max_frames(IDLE_MAX_FRAMES, TALK_MAX_FRAMES, SCREAM_MAX_FRAMES);
 
     isRunning = true;
     return true;
@@ -24,7 +26,7 @@ void Engine::process_input() {
         isRunning = false;
     }
 
-    sensitivity += input.get_volume_sensitivity_change();
+    sensitivity += input.is_volume_sensitivity_change();
     
     if (sensitivity < 0.5f) sensitivity = 0.5f;
     if (sensitivity > 5.0f) sensitivity = 5.0f;
@@ -40,7 +42,9 @@ void Engine::update() {
     float final_vol = current_volume * sensitivity;
     
     float dt = Utils::get_delta_time();
-    anim.update_blink_timer(dt);
+
+    anim.update(dt);
+    bool is_blinking = anim.is_blink();
     
     if (final_vol < 0.2f) {
         current_state = AvatarState::IDLE;
@@ -51,6 +55,7 @@ void Engine::update() {
     }
     
     renderer.set_avatar_state(current_state);
+    renderer.set_is_blinking(is_blinking);
 }
 
 void Engine::render() {

@@ -14,25 +14,26 @@ Renderer::Renderer(int width, int height, const std::string& title)
       window_title(title),
       is_ui_visible(true),
       current_state(AvatarState::IDLE),
-      current_frame(0),
-      frame_timer(0.0f),
-      is_blinking(false),
-      blink_timer(0.0f) {}
+      is_blinking(false) {}
 
 Renderer::~Renderer() {
     shutdown();
 }
 
 bool Renderer::init() {
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
+
     InitWindow(window_width, window_height, window_title.c_str());
+
+    int monitor = GetCurrentMonitor();
+    SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
+    SetWindowPosition(0, 0);
     
     if (!IsWindowReady()) {
         return false;
     }
     
     SetTargetFPS(60);
-    
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     
     return true;
 }
@@ -57,36 +58,7 @@ void Renderer::end_frame() {
 }
 
 void Renderer::update_animation(float delta_time) {
-    blink_timer += delta_time;
-    if (blink_timer >= BLINK_INTERVAL) {
-        is_blinking = true;
-        blink_timer = 0.0f;
-    }
-    
-    if (is_blinking) {
-        frame_timer += delta_time;
-        if (frame_timer >= BLINK_DURATION) {
-            is_blinking = false;
-            frame_timer = 0.0f;
-        }
-    }
-    
-    frame_timer += delta_time;
-    if (frame_timer >= FRAME_DURATION) {
-        frame_timer = 0.0f;
-        current_frame++;
-        
-        int max_frames = 1;
-        if (current_state == AvatarState::TALKING) {
-            max_frames = 2;
-        } else if (current_state == AvatarState::SCREAMING) {
-            max_frames = 1;
-        }
-        
-        if (current_frame >= max_frames) {
-            current_frame = 0;
-        }
-    }
+    anim.update(delta_time);
 }
 
 void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity) {
@@ -105,7 +77,7 @@ void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity
     };
     
     render_avatar(assets, avatar_rect);
-    
+    SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
     if (is_ui_visible) {
         render_ui(volume, sensitivity);
     }
@@ -114,7 +86,7 @@ void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity
 }
 
 void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect) {
-    Texture2D avatar_texture = assets.get_avatar_frame(current_state, current_frame, is_blinking);
+    Texture2D avatar_texture = assets.get_avatar_frame(current_state, anim.get_current_frame(), is_blinking);
     
     if (avatar_texture.id > 0) {
         DrawTexturePro(
@@ -137,6 +109,7 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect)
 }
 
 void Renderer::render_ui(float volume, float sensitivity) {
+    ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
     std::string state_text = "State: " + Utils::get_name_of_state_by_number(static_cast<int>(current_state));
     DrawText(state_text.c_str(), PADDING, PADDING, FONT_SIZE, TEXT_COLOR);
     
@@ -178,8 +151,8 @@ void Renderer::render_volume_bar(float volume) {
 
 void Renderer::render_tips() {
     const char* tips[] = {
-        "Shift+Alt+D: Toggle UI",
-        "Shift+Alt+'+'/'-': Adjust Sensitivity"
+        "F10/F11': Adjust Sensitivity",
+        "F12: Toggle UI"
     };
     
     for (int i = 0; i < 2; i++) {
@@ -208,11 +181,16 @@ bool Renderer::get_ui_visibility() const {
     return is_ui_visible;
 }
 
+void Renderer::set_max_frames(int idle_max, int talk_max, int scream_max) {
+    idle_max_frames = idle_max;
+    talk_max_frames = talk_max;
+    scream_max_frames = scream_max;
+}
+
 void Renderer::set_avatar_state(AvatarState state) {
     if (current_state != state) {
         current_state = state;
-        current_frame = 0;
-        frame_timer = 0.0f;
+        anim.reset_frame();
     }
 }
 
@@ -225,6 +203,10 @@ void Renderer::set_window_title(const std::string& title) {
     if (IsWindowReady()) {
         SetWindowTitle(window_title.c_str());
     }
+}
+
+void Renderer::set_is_blinking(bool blinking) {
+    is_blinking = blinking;
 }
 
 Color Renderer::get_color_by_state(AvatarState state) {

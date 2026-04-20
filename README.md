@@ -106,24 +106,6 @@ Verify that the `img/` directory is located correctly relative to the executable
 
 ## Project Structure
 
-```
-SimpleVirtualAvatar/
-├── CMakeLists.txt          # Build configuration
-├── src/
-│   ├── main.cpp            # Entry point
-│   ├── AudioInput.cpp      # Audio capture (miniaudio wrapper)
-│   ├── AudioHandler.cpp    # State logic & volume processing
-│   ├── Renderer.cpp        # Raylib window & rendering logic
-│   └── miniaudio.cpp       # Miniaudio implementation
-├── external/
-│   ├── raylib/             # Graphics library
-│   └── miniaudio/          # Audio library
-└── img/                    # Sprite assets
-    ├── idle.png
-    ├── speaking.png
-    └── ...
-```
-
 ## CMake Build Options
 
 - **Debug Build:** `cmake -DCMAKE_BUILD_TYPE=Debug ..`

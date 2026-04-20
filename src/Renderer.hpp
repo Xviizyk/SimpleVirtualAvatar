@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include "AssetManager.hpp"
+#include "Animation.hpp"
 #include <string>
 
 class Renderer {
@@ -11,18 +12,15 @@ private:
 
     int window_width;
     int window_height;
-    int current_frame;
+    int idle_max_frames;
+    int talk_max_frames;
+    int scream_max_frames;
 
     std::string window_title;
 
     AvatarState current_state;
-
-    float frame_timer;
-    float blink_timer;
     
-    static constexpr float FRAME_DURATION = 0.1f;
-    static constexpr float BLINK_DURATION = 0.15f;
-    static constexpr float BLINK_INTERVAL = 3.5f;
+    Animation anim;
     
     static constexpr int PADDING = 20;
     static constexpr int FONT_SIZE = 20;
@@ -32,7 +30,7 @@ private:
     static constexpr Color TEXT_COLOR = {200, 200, 200, 255};
     static constexpr Color BAR_BG_COLOR = {60, 60, 60, 255};
     static constexpr Color BAR_FG_COLOR = {100, 200, 100, 255};
-    static constexpr Color BACKGROUND_COLOR = {40, 40, 40, 255};
+    static constexpr Color BACKGROUND_COLOR = {0, 0, 0, 0};
     static constexpr Color UI_TIPS_COLOR = {150, 150, 150, 200};
     
     void render_ui(float volume, float sensitivity);
@@ -58,6 +56,8 @@ public:
     AvatarState get_avatar_state() const;
     int get_width() const { return window_width; }
     int get_height() const { return window_height; }
+    void set_max_frames(int idle_max, int talk_max, int scream_max);
     void set_window_title(const std::string& title);
+    void set_is_blinking(bool blinking);
     static Color get_color_by_state(AvatarState state);
 };
