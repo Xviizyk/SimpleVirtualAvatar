@@ -1,44 +1,51 @@
-#include "Renderer.hpp"
-#include "Utils.hpp"
 #include <cmath>
 #include <sstream>
 #include <iomanip>
-
-#ifdef _WIN32
-    #undef Rectangle
-#endif
+#include <string>
+#include "Renderer.hpp"
+#include "Utils.hpp"
 
 Renderer::Renderer(int width, int height, const std::string& title)
-    : window_width(width),
-      window_height(height),
-      window_title(title),
-      is_ui_visible(true),
-      current_state(AvatarState::IDLE),
-      is_blinking(false) {}
+    : is_ui_visible     (true),
+      is_blinking       (false),
+      window_width      (width),
+      window_height     (height),
+      idle_max_frames   (0),
+      talk_max_frames   (0),
+      scream_max_frames (0),
+      window_title      (title),
+      current_state     (AvatarState::IDLE) {}
 
 Renderer::~Renderer() {
     shutdown();
 }
 
 bool Renderer::init() {
-    SetConfigFlags(FLAG_WINDOW_ALWAYS_RUN | FLAG_VSYNC_HINT | FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
+    // int screenWidth = GetMonitorWidth();
+    // int screenHeight = GetMonitorHeight();
 
-    InitWindow(window_width, window_height, window_title.c_str());
+    SetConfigFlags(
+        FLAG_WINDOW_ALWAYS_RUN  |
+        FLAG_VSYNC_HINT         |
+        FLAG_WINDOW_TRANSPARENT |
+        FLAG_WINDOW_UNDECORATED |
+        FLAG_WINDOW_TOPMOST
+    );
 
-    int monitor = GetCurrentMonitor();
+    InitWindow(
+        window_width,
+        window_height,
+        window_title.c_str()
+    );
 
-    window_height = GetMonitorHeight(monitor);
-    window_width = GetMonitorWidth(monitor);
+    if (!IsWindowReady()) return false;
 
-    SetWindowSize(window_width, window_height);
-    SetWindowPosition(0, 0);
-    
-    if (!IsWindowReady()) {
-        return false;
-    }
-    
-    SetTargetFPS(60);
-    
+    // window_width  = screenWidth;
+    // window_height = screenHeight;
+
+    // SetWindowPosition (0, 0);
+    set_ui_visibility (true);
+    SetTargetFPS      (60);
     return true;
 }
 
@@ -54,7 +61,6 @@ bool Renderer::should_close() const {
 
 void Renderer::begin_frame() {
     BeginDrawing();
-    ClearBackground(BACKGROUND_COLOR);
 }
 
 void Renderer::end_frame() {
@@ -65,26 +71,54 @@ void Renderer::update_animation(float delta_time) {
     anim.update(delta_time);
 }
 
+Rectangle Renderer::calculate_avatar_rect(int base_size) {
+    float scale = get_dpi_scale() * avatar_scale;
+
+    float size = base_size        * scale;
+    float margin = avatar_margin  * scale;
+
+    float x = 0, y = 0;
+
+    switch (avatar_corner) {
+        case AvatarCorner::TOP_LEFT:
+            x = margin;
+            y = margin;
+            break;
+
+        case AvatarCorner::TOP_RIGHT:
+            x = window_width - size - margin;
+            y = margin;
+            break;
+
+        case AvatarCorner::BOTTOM_LEFT:
+            x = margin;
+            y = window_height - size - margin;
+            break;
+
+        case AvatarCorner::BOTTOM_RIGHT:
+            x = window_width - size - margin;
+            y = window_height - size - margin;
+            break;
+    }
+
+    return { x, y, size, size };
+}
+
 void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity) {
     float delta_time = Utils::get_delta_time();
     update_animation(delta_time);
-    
-    begin_frame();
-    
-    int avatar_width = 400;
-    int avatar_height = 400;
-    int offset = 20;
 
-    Rectangle avatar_rect = {
-        (float)(window_width - (avatar_width / 2) - offset), 
-        (float)(window_height - (avatar_height / 2) - offset),
-        (float)avatar_width,
-        (float)avatar_height
-    };
+    begin_frame();
+    if (is_ui_visible) {
+        ClearBackground({20, 20, 20, 255});
+    } else {
+        ClearBackground(BLANK);
+    }
+    
+    Rectangle avatar_rect = calculate_avatar_rect(400);
     
     render_avatar(assets, avatar_rect);
     
-    SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
     if (is_ui_visible) {
         render_ui(volume, sensitivity);
     }
@@ -110,25 +144,24 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect)
         DrawText("No avatar loaded", 
                  (int)avatar_rect.x - 70, 
                  (int)avatar_rect.y, 
-                 FONT_SIZE, 
+                 (int)(FONT_SIZE * get_dpi_scale()), 
                  TEXT_COLOR);
     }
 }
 
 void Renderer::render_ui(float volume, float sensitivity) {
-    ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
     std::string state_text = "State: " + Utils::get_name_of_state_by_number(static_cast<int>(current_state));
-    DrawText(state_text.c_str(), PADDING, PADDING, FONT_SIZE, TEXT_COLOR);
+    DrawText(state_text.c_str(), (int)(PADDING * get_dpi_scale()), (int)(PADDING * get_dpi_scale()), (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
     
     std::ostringstream volume_stream;
     volume_stream << std::fixed << std::setprecision(2) << "Volume: " << volume;
-    DrawText(volume_stream.str().c_str(), PADDING, PADDING + 30, FONT_SIZE, TEXT_COLOR);
+    DrawText(volume_stream.str().c_str(), (int)(PADDING * get_dpi_scale()), (int)(PADDING * get_dpi_scale()) + 30, (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
     
     render_volume_bar(volume);
     
     std::ostringstream sensitivity_stream;
     sensitivity_stream << std::fixed << std::setprecision(2) << "Sensitivity: " << sensitivity;
-    DrawText(sensitivity_stream.str().c_str(), PADDING, PADDING + 60, FONT_SIZE, TEXT_COLOR);
+    DrawText(sensitivity_stream.str().c_str(), (int)(PADDING * get_dpi_scale()), (int)(PADDING * get_dpi_scale()) + 60, (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
     
     render_tips();
     
@@ -136,10 +169,10 @@ void Renderer::render_ui(float volume, float sensitivity) {
 }
 
 void Renderer::render_volume_bar(float volume) {
-    int bar_x = PADDING + 120;
-    int bar_y = PADDING + 30;
+    int bar_x = (int)(PADDING * get_dpi_scale()) + 120;
+    int bar_y = (int)(PADDING * get_dpi_scale()) + 30;
     
-    DrawRectangle(bar_x, bar_y, VOLUME_BAR_WIDTH, VOLUME_BAR_HEIGHT, BAR_BG_COLOR);
+    DrawRectangle(bar_x, bar_y, (int)(VOLUME_BAR_WIDTH * get_dpi_scale()), (int)(VOLUME_BAR_HEIGHT * get_dpi_scale()), BAR_BG_COLOR);
     
     float normalized_volume = volume > 1.0f ? 1.0f : (volume < 0.0f ? 0.0f : volume);
     int filled_width = (int)(VOLUME_BAR_WIDTH * normalized_volume);
@@ -152,36 +185,56 @@ void Renderer::render_volume_bar(float volume) {
         bar_color = {255, 100, 100, 255};
     }
     
-    DrawRectangle(bar_x, bar_y, filled_width, VOLUME_BAR_HEIGHT, bar_color);
-    DrawRectangleLines(bar_x, bar_y, VOLUME_BAR_WIDTH, VOLUME_BAR_HEIGHT, TEXT_COLOR);
+    DrawRectangle(bar_x, bar_y, filled_width, (int)(VOLUME_BAR_HEIGHT * get_dpi_scale()), bar_color);
+    DrawRectangleLines(bar_x, bar_y, (int)(VOLUME_BAR_WIDTH * get_dpi_scale()), (int)(VOLUME_BAR_HEIGHT * get_dpi_scale()), TEXT_COLOR);
+}
+
+float Renderer::get_dpi_scale() {
+    void* hwnd = GetWindowHandle();
+    if (!hwnd) return 1.0f;
+
+    return winutils.get_dpi_scale(hwnd);
 }
 
 void Renderer::render_tips() {
     const char* tips[] = {
-        "F10/F11': Adjust Sensitivity",
+        "F10/F11: Adjust Sensitivity",
         "F12: Toggle UI"
     };
     
     for (int i = 0; i < 2; i++) {
         DrawText(tips[i], 
-                 PADDING, 
-                 window_height - PADDING - (2 - i) * 25, 
-                 FONT_SIZE - 4, 
+                 (int)(PADDING * get_dpi_scale()), 
+                 window_height - (int)(PADDING * get_dpi_scale()) - (2 - i) * 25, 
+                 (int)(FONT_SIZE * get_dpi_scale()) - 4, 
                  UI_TIPS_COLOR);
     }
 }
 
 void Renderer::render_fps() {
     std::string fps_text = "FPS: " + std::to_string(GetFPS());
-    DrawText(fps_text.c_str(), window_width - 150, PADDING, FONT_SIZE, TEXT_COLOR);
+    DrawText(fps_text.c_str(), window_width - 150, (int)(PADDING * get_dpi_scale()), (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
 }
 
 void Renderer::toggle_ui_visibility() {
-    is_ui_visible = !is_ui_visible;
+    set_ui_visibility(!is_ui_visible);
 }
 
 void Renderer::set_ui_visibility(bool visible) {
+    if (is_ui_visible == visible) return;
+
     is_ui_visible = visible;
+
+    void* hwnd = GetWindowHandle();
+    if (!hwnd) return;
+
+    if (is_ui_visible) {
+        winutils.set_overlay_mode(hwnd, false);
+        ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
+    } else {
+        winutils.set_overlay_mode(hwnd, true);
+        SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
+    }
 }
 
 bool Renderer::get_ui_visibility() const {

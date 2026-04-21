@@ -1,5 +1,9 @@
 #include "Engine.hpp"
 
+#ifdef _MSVC
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#endif
+
 bool Engine::init() {
     if (!renderer.init()) {
         return false;

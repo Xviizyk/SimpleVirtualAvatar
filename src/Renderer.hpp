@@ -3,10 +3,20 @@
 #include "raylib.h"
 #include "AssetManager.hpp"
 #include "Animation.hpp"
+#include "WinUtils.hpp"
 #include <string>
+
+enum class AvatarCorner {
+    TOP_LEFT,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT
+};
 
 class Renderer {
 private:
+    float avatar_scale = 1.0f;
+
     bool is_ui_visible;
     bool is_blinking;
 
@@ -15,11 +25,14 @@ private:
     int idle_max_frames;
     int talk_max_frames;
     int scream_max_frames;
+    int avatar_margin = 20;
 
     std::string window_title;
 
+    AvatarCorner avatar_corner = AvatarCorner::BOTTOM_RIGHT;
     AvatarState current_state;
     
+    WinUtils winutils;
     Animation anim;
     
     static constexpr int PADDING = 20;
@@ -54,6 +67,8 @@ public:
     bool get_ui_visibility() const;
     void set_avatar_state(AvatarState state);
     AvatarState get_avatar_state() const;
+    Rectangle calculate_avatar_rect(int base_size);
+    float get_dpi_scale();
     int get_width() const { return window_width; }
     int get_height() const { return window_height; }
     void set_max_frames(int idle_max, int talk_max, int scream_max);

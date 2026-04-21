@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
     add_compile_options(/W4)
+    add_compile_options(/FS)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -63,13 +64,13 @@ set(PROJECT_SOURCES
     src/AudioInput.hpp
     src/Engine.cpp
     src/Engine.hpp
-    src/Input.cpp
     src/Input.hpp
     src/main.cpp
     src/Renderer.cpp
     src/Renderer.hpp
-    src/Utils.cpp
     src/Utils.hpp
+    src/WinUtils.cpp
+    src/WinUtils.hpp
 )
 
 add_executable(SimpleVirtualAvatar ${PROJECT_SOURCES})
