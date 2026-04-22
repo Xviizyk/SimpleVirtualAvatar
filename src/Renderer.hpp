@@ -4,6 +4,7 @@
 #include "AssetManager.hpp"
 #include "Animation.hpp"
 #include "WinUtils.hpp"
+
 #include <string>
 
 enum class AvatarCorner {
@@ -49,10 +50,9 @@ private:
     void render_ui(float volume, float sensitivity);
     void render_avatar(AssetManager& assets, const Rectangle& avatar_rect);
     void update_animation(float delta_time);
-    void render_volume_bar(float volume);
-    void render_tips();
-    void render_fps();
-
+    void render_volume_bar(float volume, int bar_x, int bar_y);
+    void render_tips(int screen_width, int screen_height, float dpi, int font_size);
+    void render_fps(int screen_width, float dpi, int font_size);
 public:
     Renderer(int width = 1280, int height = 720, const std::string& title = "Simple Virtual Avatar");
     ~Renderer();

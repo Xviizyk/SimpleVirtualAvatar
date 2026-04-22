@@ -21,14 +21,12 @@ Renderer::~Renderer() {
 }
 
 bool Renderer::init() {
-    // int screenWidth = GetMonitorWidth();
-    // int screenHeight = GetMonitorHeight();
-
     SetConfigFlags(
         FLAG_WINDOW_ALWAYS_RUN  |
         FLAG_VSYNC_HINT         |
         FLAG_WINDOW_TRANSPARENT |
-        FLAG_WINDOW_UNDECORATED |
+        FLAG_WINDOW_RESIZABLE   |
+        FLAG_MSAA_4X_HINT       |
         FLAG_WINDOW_TOPMOST
     );
 
@@ -40,12 +38,8 @@ bool Renderer::init() {
 
     if (!IsWindowReady()) return false;
 
-    // window_width  = screenWidth;
-    // window_height = screenHeight;
-
-    // SetWindowPosition (0, 0);
-    set_ui_visibility (true);
     SetTargetFPS      (60);
+    set_ui_visibility (true);
     return true;
 }
 
@@ -86,18 +80,18 @@ Rectangle Renderer::calculate_avatar_rect(int base_size) {
             break;
 
         case AvatarCorner::TOP_RIGHT:
-            x = window_width - size - margin;
+            x = GetScreenWidth() - size - margin;
             y = margin;
             break;
 
         case AvatarCorner::BOTTOM_LEFT:
             x = margin;
-            y = window_height - size - margin;
+            y = GetScreenHeight() - size - margin;
             break;
 
         case AvatarCorner::BOTTOM_RIGHT:
-            x = window_width - size - margin;
-            y = window_height - size - margin;
+            x = GetScreenWidth() - size - margin;
+            y = GetScreenHeight() - size - margin;
             break;
     }
 
@@ -106,13 +100,14 @@ Rectangle Renderer::calculate_avatar_rect(int base_size) {
 
 void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity) {
     float delta_time = Utils::get_delta_time();
+
     update_animation(delta_time);
 
     begin_frame();
     if (is_ui_visible) {
         ClearBackground({20, 20, 20, 255});
     } else {
-        ClearBackground(BLANK);
+        ClearBackground({0, 0, 0, 1});
     }
     
     Rectangle avatar_rect = calculate_avatar_rect(400);
@@ -150,43 +145,54 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect)
 }
 
 void Renderer::render_ui(float volume, float sensitivity) {
+    int current_width = GetScreenWidth();
+    int current_height = GetScreenHeight();
+    
+    float dpi = get_dpi_scale();
+    float padding = PADDING * dpi;
+    float font_size = FONT_SIZE * dpi;
+    float line_height = 30 * dpi;
+    
+    float y_offset = padding;
+    
     std::string state_text = "State: " + Utils::get_name_of_state_by_number(static_cast<int>(current_state));
-    DrawText(state_text.c_str(), (int)(PADDING * get_dpi_scale()), (int)(PADDING * get_dpi_scale()), (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
+    DrawText(state_text.c_str(), (int)padding, (int)y_offset, (int)font_size, TEXT_COLOR);
+    y_offset += line_height;
     
     std::ostringstream volume_stream;
     volume_stream << std::fixed << std::setprecision(2) << "Volume: " << volume;
-    DrawText(volume_stream.str().c_str(), (int)(PADDING * get_dpi_scale()), (int)(PADDING * get_dpi_scale()) + 30, (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
+    DrawText(volume_stream.str().c_str(), (int)padding, (int)y_offset, (int)font_size, TEXT_COLOR);
     
-    render_volume_bar(volume);
-    
+    render_volume_bar(volume, (int)(padding + 120 * dpi), (int)y_offset);
+    y_offset += line_height;
+
     std::ostringstream sensitivity_stream;
     sensitivity_stream << std::fixed << std::setprecision(2) << "Sensitivity: " << sensitivity;
-    DrawText(sensitivity_stream.str().c_str(), (int)(PADDING * get_dpi_scale()), (int)(PADDING * get_dpi_scale()) + 60, (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
+    DrawText(sensitivity_stream.str().c_str(), (int)padding, (int)y_offset, (int)font_size, TEXT_COLOR);
     
-    render_tips();
-    
-    render_fps();
+    render_tips(current_width, current_height, dpi, (int)font_size);
+    render_fps(current_width, dpi, (int)font_size);
 }
 
-void Renderer::render_volume_bar(float volume) {
-    int bar_x = (int)(PADDING * get_dpi_scale()) + 120;
-    int bar_y = (int)(PADDING * get_dpi_scale()) + 30;
+void Renderer::render_volume_bar(float volume, int bar_x, int bar_y) {
+    float dpi = get_dpi_scale();
+    int bar_width = (int)(VOLUME_BAR_WIDTH * dpi);
+    int bar_height = (int)(VOLUME_BAR_HEIGHT * dpi);
     
-    DrawRectangle(bar_x, bar_y, (int)(VOLUME_BAR_WIDTH * get_dpi_scale()), (int)(VOLUME_BAR_HEIGHT * get_dpi_scale()), BAR_BG_COLOR);
+    DrawRectangle(bar_x, bar_y, bar_width, bar_height, BAR_BG_COLOR);
     
-    float normalized_volume = volume > 1.0f ? 1.0f : (volume < 0.0f ? 0.0f : volume);
-    int filled_width = (int)(VOLUME_BAR_WIDTH * normalized_volume);
+    float normalized_volume = volume;
+    if (normalized_volume < 0.0f) normalized_volume = 0.0f;
+    if (normalized_volume > 1.0f) normalized_volume = 1.0f;
+
+    int filled_width = (int)(bar_width * normalized_volume);
     
     Color bar_color = BAR_FG_COLOR;
-    if (normalized_volume > 0.7f) {
-        bar_color = {255, 200, 100, 255};
-    }
-    if (normalized_volume > 0.9f) {
-        bar_color = {255, 100, 100, 255};
-    }
+    if (normalized_volume > 0.7f) bar_color = {255, 200, 100, 255};
+    if (normalized_volume > 0.9f) bar_color = {255, 100, 100, 255};
     
-    DrawRectangle(bar_x, bar_y, filled_width, (int)(VOLUME_BAR_HEIGHT * get_dpi_scale()), bar_color);
-    DrawRectangleLines(bar_x, bar_y, (int)(VOLUME_BAR_WIDTH * get_dpi_scale()), (int)(VOLUME_BAR_HEIGHT * get_dpi_scale()), TEXT_COLOR);
+    DrawRectangle(bar_x, bar_y, filled_width, bar_height, bar_color);
+    DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, TEXT_COLOR);
 }
 
 float Renderer::get_dpi_scale() {
@@ -196,24 +202,31 @@ float Renderer::get_dpi_scale() {
     return winutils.get_dpi_scale(hwnd);
 }
 
-void Renderer::render_tips() {
+void Renderer::render_tips(int screen_width, int screen_height, float dpi, int font_size) {
     const char* tips[] = {
         "F10/F11: Adjust Sensitivity",
         "F12: Toggle UI"
     };
     
+    float padding = PADDING * dpi;
     for (int i = 0; i < 2; i++) {
+        int y = screen_height - (int)(padding) - (2 - i) * (int)(25 * dpi);
         DrawText(tips[i], 
-                 (int)(PADDING * get_dpi_scale()), 
-                 window_height - (int)(PADDING * get_dpi_scale()) - (2 - i) * 25, 
-                 (int)(FONT_SIZE * get_dpi_scale()) - 4, 
+                 (int)padding, 
+                 y, 
+                 (int)(font_size - 4 * dpi), 
                  UI_TIPS_COLOR);
     }
 }
 
-void Renderer::render_fps() {
+void Renderer::render_fps(int screen_width, float dpi, int font_size) {
     std::string fps_text = "FPS: " + std::to_string(GetFPS());
-    DrawText(fps_text.c_str(), window_width - 150, (int)(PADDING * get_dpi_scale()), (int)(FONT_SIZE * get_dpi_scale()), TEXT_COLOR);
+    float padding = PADDING * dpi;
+    int text_width = MeasureText(fps_text.c_str(), font_size);
+    int x = screen_width - text_width - (int)(padding * 1.5f);
+    int y = (int)padding;
+    
+    DrawText(fps_text.c_str(), x, y, font_size, TEXT_COLOR);
 }
 
 void Renderer::toggle_ui_visibility() {
