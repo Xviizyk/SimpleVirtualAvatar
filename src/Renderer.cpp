@@ -67,35 +67,34 @@ void Renderer::update_animation(float delta_time) {
 
 Rectangle Renderer::calculate_avatar_rect(int base_size) {
     float scale = get_dpi_scale() * avatar_scale;
+    float size = base_size * scale;
 
-    float size = base_size        * scale;
-    float margin = avatar_margin  * scale;
+    return { avatar_position.x, avatar_position.y, size, size };
+}
 
-    float x = 0, y = 0;
+void Renderer::handle_mouse_drag(const Rectangle& avatar_rect) {
+    Vector2 mouse = GetMousePosition();
 
-    switch (avatar_corner) {
-        case AvatarCorner::TOP_LEFT:
-            x = margin;
-            y = margin;
-            break;
-
-        case AvatarCorner::TOP_RIGHT:
-            x = GetScreenWidth() - size - margin;
-            y = margin;
-            break;
-
-        case AvatarCorner::BOTTOM_LEFT:
-            x = margin;
-            y = GetScreenHeight() - size - margin;
-            break;
-
-        case AvatarCorner::BOTTOM_RIGHT:
-            x = GetScreenWidth() - size - margin;
-            y = GetScreenHeight() - size - margin;
-            break;
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if (CheckCollisionPointRec(mouse, avatar_rect)) {
+            is_dragging = true;
+            drag_offset = {
+                mouse.x - avatar_rect.x,
+                mouse.y - avatar_rect.y
+            };
+        }
     }
 
-    return { x, y, size, size };
+    if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+        is_dragging = false;
+    }
+
+    if (is_dragging) {
+        avatar_position = {
+            mouse.x - drag_offset.x,
+            mouse.y - drag_offset.y
+        };
+    }
 }
 
 void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity) {

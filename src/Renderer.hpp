@@ -16,6 +16,11 @@ enum class AvatarCorner {
 
 class Renderer {
 private:
+    Vector2 drag_offset = {0, 0};
+    Vector2 avatar_position = {100, 100};
+    
+    bool is_dragging = false;
+
     float avatar_scale = 1.0f;
 
     bool is_ui_visible;
@@ -63,6 +68,7 @@ public:
     void end_frame();
     void draw_avatar(AssetManager& assets, float volume, float sensitivity);
     void toggle_ui_visibility();
+    void handle_mouse_drag(const Rectangle& avatar_rect);
     void set_ui_visibility(bool visible);
     bool get_ui_visibility() const;
     void set_avatar_state(AvatarState state);
