@@ -1,0 +1,76 @@
+name: Multi-Platform Build
+
+on: 
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows
+            arch: amd64
+            runner: windows-latest
+          
+          - os: linux
+            arch: amd64
+            runner: ubuntu-latest
+
+          - os: linux
+            arch: arm64
+            runner: ubuntu-latest
+
+          - os: macos
+            arch: arm64
+            runner: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies (Linux AMD64)
+        if: matrix.os == 'linux' && matrix.arch == 'amd64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxcursor-dev libxinerama-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev
+
+      - name: Install Dependencies (Linux ARM64 Cross-Compile)
+        if: matrix.os == 'linux' && matrix.arch == 'arm64'
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          sudo apt-get install -y libx11-dev:arm64 libxcursor-dev:arm64 libxinerama-dev:arm64 libxrandr-dev:arm64 libxi-dev:arm64 libgl1-mesa-dev:arm64
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          if [ "${{ matrix.os }}" = "linux" ] && [ "${{ matrix.arch }}" = "arm64" ]; then
+            cmake .. -DCMAKE_TOOLCHAIN_FILE=../arm64-linux.cmake -DCMAKE_BUILD_TYPE=Release
+          elif [ "${{ matrix.os }}" = "windows" ]; then
+            cmake .. -DCMAKE_BUILD_TYPE=Release
+          else
+            cmake .. -DCMAKE_BUILD_TYPE=Release
+          fi
+        shell: bash
+
+      - name: Build Project
+        run: cmake --build build --config Release
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            build/SimpleVAvatar*
+            build/*.exe
+            build/*.app

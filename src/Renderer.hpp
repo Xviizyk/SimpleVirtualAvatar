@@ -24,7 +24,6 @@ private:
     float avatar_scale = 1.0f;
 
     bool is_ui_visible;
-    bool is_blinking;
 
     int window_width;
     int window_height;
@@ -53,7 +52,7 @@ private:
     static constexpr Color UI_TIPS_COLOR = {150, 150, 150, 200};
     
     void render_ui(float volume, float sensitivity);
-    void render_avatar(AssetManager& assets, const Rectangle& avatar_rect);
+    void render_avatar(AssetManager& assets, const Rectangle& avatar_rect, bool current_blink_state);
     void update_animation(float delta_time);
     void render_volume_bar(float volume, int bar_x, int bar_y);
     void render_tips(int screen_width, int screen_height, float dpi, int font_size);
@@ -79,6 +78,5 @@ public:
     int get_height() const { return window_height; }
     void set_max_frames(int idle_max, int talk_max, int scream_max);
     void set_window_title(const std::string& title);
-    void set_is_blinking(bool blinking);
     static Color get_color_by_state(AvatarState state);
 };

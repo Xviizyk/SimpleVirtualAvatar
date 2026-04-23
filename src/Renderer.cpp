@@ -7,7 +7,6 @@
 
 Renderer::Renderer(int width, int height, const std::string& title)
     : is_ui_visible     (true),
-      is_blinking       (false),
       window_width      (width),
       window_height     (height),
       idle_max_frames   (0),
@@ -102,16 +101,18 @@ void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity
 
     update_animation(delta_time);
 
+    bool current_blink_state = anim.is_blink();
+
     begin_frame();
     if (is_ui_visible) {
         ClearBackground({20, 20, 20, 255});
     } else {
-        ClearBackground({0, 0, 0, 1});
+        ClearBackground({0, 0, 0, 0});
     }
     
     Rectangle avatar_rect = calculate_avatar_rect(400);
-    
-    render_avatar(assets, avatar_rect);
+    handle_mouse_drag(avatar_rect);
+    render_avatar(assets, avatar_rect, current_blink_state);
     
     if (is_ui_visible) {
         render_ui(volume, sensitivity);
@@ -120,8 +121,12 @@ void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity
     end_frame();
 }
 
-void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect) {
-    Texture2D avatar_texture = assets.get_avatar_frame(current_state, anim.get_current_frame(), is_blinking);
+void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect, bool current_blink_state) {
+    Texture2D avatar_texture = assets.get_avatar_frame(
+        current_state, 
+        anim.get_current_frame(), 
+        current_blink_state
+    );
     
     if (avatar_texture.id > 0) {
         DrawTexturePro(
@@ -233,17 +238,17 @@ void Renderer::toggle_ui_visibility() {
 }
 
 void Renderer::set_ui_visibility(bool visible) {
-    if (is_ui_visible == visible) return;
-
     is_ui_visible = visible;
 
     void* hwnd = GetWindowHandle();
     if (!hwnd) return;
 
     if (is_ui_visible) {
+        winutils.set_window_borderless(hwnd, false);
         winutils.set_overlay_mode(hwnd, false);
         ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
     } else {
+        winutils.set_window_borderless(hwnd, true);
         winutils.set_overlay_mode(hwnd, true);
         SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
     }
@@ -262,6 +267,19 @@ void Renderer::set_max_frames(int idle_max, int talk_max, int scream_max) {
 void Renderer::set_avatar_state(AvatarState state) {
     if (current_state != state) {
         current_state = state;
+
+        switch (state) {
+            case AvatarState::IDLE:
+                anim.set_max_frames(idle_max_frames);
+                break;
+            case AvatarState::TALKING:
+                anim.set_max_frames(talk_max_frames);
+                break;
+            case AvatarState::SCREAMING:
+                anim.set_max_frames(scream_max_frames);
+                break;
+        }
+
         anim.reset_frame();
     }
 }
@@ -275,10 +293,6 @@ void Renderer::set_window_title(const std::string& title) {
     if (IsWindowReady()) {
         SetWindowTitle(window_title.c_str());
     }
-}
-
-void Renderer::set_is_blinking(bool blinking) {
-    is_blinking = blinking;
 }
 
 Color Renderer::get_color_by_state(AvatarState state) {

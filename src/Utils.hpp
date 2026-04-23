@@ -1,22 +1,9 @@
 #pragma once
-#include "raylib.h"
+
 #include <string>
 
 namespace Utils {
-    inline float get_delta_time() {
-        return GetFrameTime();
-    }
-
-    inline float smooth_volume(float current_vol, float target_rms) {
-        return current_vol * 0.9f + target_rms * 0.1f;
-    }
-
-    inline std::string get_name_of_state_by_number(int num) {
-        switch (num) {
-            case 0:  return "Idle";
-            case 1:  return "Talk";
-            case 2:  return "Scream";
-            default: return "";
-        }
-    }
+    float get_delta_time();
+    float smooth_volume(float current_vol, float target_rms);
+    std::string get_name_of_state_by_number(int num);
 }

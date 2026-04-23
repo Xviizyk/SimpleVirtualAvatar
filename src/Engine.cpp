@@ -30,7 +30,7 @@ void Engine::process_input() {
         isRunning = false;
     }
 
-    sensitivity += input.is_volume_sensitivity_change();
+    sensitivity += input.get_volume_sensitivity_change();
     
     if (sensitivity < 0.5f) sensitivity = 0.5f;
     if (sensitivity > 5.0f) sensitivity = 5.0f;
@@ -44,12 +44,7 @@ void Engine::update() {
     current_volume = Utils::smooth_volume(current_volume, audio.rms);
     
     float final_vol = current_volume * sensitivity;
-    
-    float dt = Utils::get_delta_time();
 
-    anim.update(dt);
-    bool is_blinking = anim.is_blink();
-    
     if (final_vol < 0.2f) {
         current_state = AvatarState::IDLE;
     } else if (final_vol < 0.7f) {
@@ -59,7 +54,6 @@ void Engine::update() {
     }
     
     renderer.set_avatar_state(current_state);
-    renderer.set_is_blinking(is_blinking);
 }
 
 void Engine::render() {
