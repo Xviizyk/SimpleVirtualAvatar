@@ -1,0 +1,44 @@
+name: GHA
+
+on: 
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-windows-amd64:
+    uses: ./.github/workflows/build-windows-amd64.yml
+
+  build-windows-arm64:
+    uses: ./.github/workflows/build-windows-arm64.yml
+
+  build-linux-amd64:
+    uses: ./.github/workflows/build-linux-amd64.yml
+
+  build-linux-arm64:
+    uses: ./.github/workflows/build-linux-arm64.yml
+
+  build-macos-amd64:
+    uses: ./.github/workflows/build-macos-amd64.yml
+
+  build-macos-arm64:
+    uses: ./.github/workflows/build-macos-arm64.yml
+
+  release:
+    name: Create Release
+    needs: [build-windows-amd64, build-windows-arm64, build-linux-amd64, build-linux-arm64, build-macos-amd64, build-macos-arm64]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
