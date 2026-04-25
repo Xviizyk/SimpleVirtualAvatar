@@ -6,56 +6,42 @@ on:
 jobs:
   build:
     name: Linux ARM64
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-arm64
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       
-      - name: Setup APT for cross-compilation
+      - name: Install dependencies
         run: |
-          sudo dpkg --add-architecture arm64
-          
-          sudo find /etc/apt/sources.list /etc/apt/sources.list.d/ -type f -name "*.list" \
-            -exec sudo sed -i 's/^deb /deb [arch=amd64] /g; s/^deb-src /deb-src [arch=amd64] /g' {} +
-          
-          sudo tee /etc/apt/sources.list.d/arm64-ports.list > /dev/null <<'EOF'
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse
-          EOF
-          
-          sudo apt-get update -qq || true
-      
-      - name: Install cross-compilation toolchain
-        run: |
-          sudo apt-get install -y -qq \
-            cmake build-essential \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            pkg-config-aarch64-linux-gnu \
-            libx11-dev:arm64 libxcursor-dev:arm64 libxinerama-dev:arm64 \
-            libxrandr-dev:arm64 libxi-dev:arm64 \
-            libgl1-mesa-dev:arm64 libglu1-mesa-dev:arm64 \
-            libxext-dev:arm64 libxrender-dev:arm64 \
-            libxdamage-dev:arm64 libxfixes-dev:arm64
-      
-      - name: Configure ARM64 cross-compile
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            build-essential \
+            pkg-config \
+            libx11-dev \
+            libxcursor-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libxext-dev \
+            libxrender-dev \
+            libxdamage-dev \
+            libxfixes-dev \
+            libasound2-dev \
+            libpulse-dev
+
+      - name: Configure
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-            -DCMAKE_FIND_ROOT_PATH=/usr/aarch64-linux-gnu \
-            -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
-            -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
-            -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
-            -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY \
-            -DPKG_CONFIG_EXECUTABLE=aarch64-linux-gnu-pkg-config
-      
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64
+
       - name: Build
-        run: cmake --build build --config Release --parallel
+        run: cmake --build build --config Release --parallel $(nproc)
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
