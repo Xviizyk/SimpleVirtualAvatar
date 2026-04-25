@@ -6,10 +6,9 @@ on:
 jobs:
   build:
     name: Linux ARM64
-    runs-on: ubuntu-22.04-arm64
+    runs-on: ubuntu-latest-arm64
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       
@@ -17,31 +16,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            cmake \
-            build-essential \
-            pkg-config \
-            libx11-dev \
-            libxcursor-dev \
-            libxinerama-dev \
-            libxrandr-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libglu1-mesa-dev \
-            libxext-dev \
-            libxrender-dev \
-            libxdamage-dev \
-            libxfixes-dev \
-            libasound2-dev \
-            libpulse-dev
-
+            build-essential cmake \
+            libx11-dev libxcursor-dev libxinerama-dev \
+            libxrandr-dev libxi-dev \
+            libgl1-mesa-dev libglu1-mesa-dev
+      
       - name: Configure
-        run: |
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64
-
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      
       - name: Build
-        run: cmake --build build --config Release --parallel $(nproc)
+        run: cmake --build build --config Release --parallel
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
