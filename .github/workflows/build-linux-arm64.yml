@@ -12,23 +12,24 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Install cross-compilation toolchain
+      - name: Setup APT for cross-compilation
         run: |
           sudo dpkg --add-architecture arm64
-
-          sudo find /etc/apt/sources.list /etc/apt/sources.list.d/ -type f -name "*.list" -exec \
-            sudo sed -i 's/deb http/deb [arch=amd64] http/g' {} +
-          sudo find /etc/apt/sources.list /etc/apt/sources.list.d/ -type f -name "*.list" -exec \
-            sudo sed -i 's/deb https/deb [arch=amd64] https/g' {} +
-
-          sudo bash -c 'cat <<EOF > /etc/apt/sources.list.d/arm64-ports.list
+          
+          sudo find /etc/apt/sources.list /etc/apt/sources.list.d/ -type f -name "*.list" \
+            -exec sudo sed -i 's/^deb /deb [arch=amd64] /g' {} +
+          
+          sudo tee /etc/apt/sources.list.d/arm64-ports.list > /dev/null <<'EOF'
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse
-          EOF'
-
-          sudo apt-get update
-          sudo apt-get install -y \
+          EOF
+          
+          sudo apt-get update -qq
+      
+      - name: Install cross-compilation toolchain
+        run: |
+          sudo apt-get install -y -qq \
             cmake build-essential \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
             pkg-config-aarch64-linux-gnu \
