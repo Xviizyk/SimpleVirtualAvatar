@@ -33,4 +33,3 @@ jobs:
             build/SimpleVirtualAvatar.app
           if-no-files-found: warn
 
-          name: Build Linux AMD64
