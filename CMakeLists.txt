@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project("SimpleVirtualAvatar" VERSION 0.0.1 LANGUAGES C CXX)
+project("SimpleVirtualAvatar" VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,6 +8,24 @@ if(MSVC)
     add_compile_options(/W4 /FS)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+if(EXISTS "/data/data/com.termux/files/usr/include/X11/Xlib.h")
+    message(STATUS "Detected Termux environment with X11")
+    set(TERMUX_X11_INCLUDE "/data/data/com.termux/files/usr/include")
+    set(TERMUX_X11_LIB "/data/data/com.termux/files/usr/lib")
+    
+    set(X11_FOUND TRUE)
+    set(X11_INCLUDE_DIR "${TERMUX_X11_INCLUDE}")
+    set(X11_X11_INCLUDE_PATH "${TERMUX_X11_INCLUDE}")
+    set(X11_X11_LIB "${TERMUX_X11_LIB}/libX11.so")
+    set(X11_Xrandr_LIB "${TERMUX_X11_LIB}/libXrandr.so")
+    set(X11_Xinerama_LIB "${TERMUX_X11_LIB}/libXinerama.so")
+    set(X11_Xcursor_LIB "${TERMUX_X11_LIB}/libXcursor.so")
+    set(X11_Xi_LIB "${TERMUX_X11_LIB}/libXi.so")
+    
+    include_directories(${TERMUX_X11_INCLUDE})
+    link_directories(${TERMUX_X11_LIB})
 endif()
 
 set(RAYLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/raylib")
@@ -47,7 +65,6 @@ set(PROJECT_SOURCES
     src/main.cpp
     src/Renderer.cpp src/Renderer.hpp
     src/Utils.cpp src/Utils.hpp
-    src/WinUtils.cpp src/WinUtils.hpp
 )
 
 add_executable(SimpleVirtualAvatar ${PROJECT_SOURCES})
@@ -70,7 +87,6 @@ target_compile_definitions(SimpleVirtualAvatar PRIVATE
 target_link_libraries(SimpleVirtualAvatar PRIVATE raylib)
 
 if(WIN32)
-    # Статическая линовка рантайма
     set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
     
     target_link_libraries(SimpleVirtualAvatar PRIVATE 
@@ -90,6 +106,7 @@ elseif(APPLE)
     target_link_libraries(SimpleVirtualAvatar PRIVATE 
         pthread "-framework Cocoa" "-framework IOKit" "-framework CoreVideo" "-framework OpenGL"
     )
+
 else()
     target_link_libraries(SimpleVirtualAvatar PRIVATE 
         pthread dl m X11 Xrandr Xinerama Xcursor Xi GL
@@ -103,5 +120,8 @@ message(STATUS "Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "raylib: Available")
 message(STATUS "miniaudio: Available")
+if(DEFINED TERMUX_X11_INCLUDE)
+    message(STATUS "Platform: Termux (X11 at ${TERMUX_X11_INCLUDE})")
+endif()
 message(STATUS "=========================================")
 message(STATUS "")
