@@ -30,11 +30,6 @@ void Engine::process_input() {
         isRunning = false;
     }
 
-    sensitivity += input.get_volume_sensitivity_change();
-    
-    if (sensitivity < 0.5f) sensitivity = 0.1f;
-    if (sensitivity > 5.0f) sensitivity = 100.0f;
-    
     if (input.is_interface_toggled()) {
         renderer.toggle_ui_visibility();
     }
@@ -57,7 +52,7 @@ void Engine::update() {
 }
 
 void Engine::render() {
-    renderer.draw_avatar(assets, current_volume, sensitivity);
+    renderer.draw_avatar(assets, current_volume);
 }
 
 void Engine::run() {

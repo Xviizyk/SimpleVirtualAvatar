@@ -22,10 +22,10 @@ Renderer::~Renderer() {
 bool Renderer::init() {
     SetConfigFlags(
         FLAG_WINDOW_ALWAYS_RUN  |
-        FLAG_VSYNC_HINT         |
+        // FLAG_VSYNC_HINT         |
         FLAG_WINDOW_TRANSPARENT |
         FLAG_WINDOW_RESIZABLE   |
-        FLAG_MSAA_4X_HINT       |
+        // FLAG_MSAA_4X_HINT       |
         FLAG_WINDOW_TOPMOST
     );
 
@@ -37,7 +37,7 @@ bool Renderer::init() {
 
     if (!IsWindowReady()) return false;
 
-    SetTargetFPS      (60);
+    SetTargetFPS      (0);
     set_ui_visibility (true);
     return true;
 }
@@ -65,7 +65,7 @@ void Renderer::update_animation(float delta_time) {
 }
 
 Rectangle Renderer::calculate_avatar_rect(int base_size) {
-    float scale = get_dpi_scale() * avatar_scale;
+    float scale = last_dpi_scale * avatar_scale;
     float size = base_size * scale;
 
     return { avatar_position.x, avatar_position.y, size, size };
@@ -96,8 +96,13 @@ void Renderer::handle_mouse_drag(const Rectangle& avatar_rect) {
     }
 }
 
-void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity) {
+void Renderer::draw_avatar(AssetManager& assets, float volume) {
     float delta_time = Utils::get_delta_time();
+
+    update_dpi_scale();
+
+    if (GetFPS() > max_fps) std::cout << "\r\n" << max_fps;
+    max_fps = std::max(max_fps, GetFPS());
 
     update_animation(delta_time);
 
@@ -111,11 +116,11 @@ void Renderer::draw_avatar(AssetManager& assets, float volume, float sensitivity
     }
     
     Rectangle avatar_rect = calculate_avatar_rect(400);
-    handle_mouse_drag(avatar_rect);
+
     render_avatar(assets, avatar_rect, current_blink_state);
     
     if (is_ui_visible) {
-        render_ui(volume, sensitivity);
+        render_ui(volume);
     }
     
     end_frame();
@@ -133,7 +138,7 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect,
             avatar_texture,
             {0, 0, (float)avatar_texture.width, (float)avatar_texture.height},
             avatar_rect,
-            {avatar_rect.width / 2, avatar_rect.height / 2},
+            {0, 0},
             0.0f,
             WHITE
         );
@@ -143,28 +148,38 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect,
         DrawText("No avatar loaded", 
                  (int)avatar_rect.x - 70, 
                  (int)avatar_rect.y, 
-                 (int)(FONT_SIZE * get_dpi_scale()), 
+                 (int)(FONT_SIZE * last_dpi_scale), 
                  TEXT_COLOR);
     }
 }
 
-void Renderer::render_ui(float volume, float sensitivity) {
+void Renderer::render_ui(float volume) {
     int current_width = GetScreenWidth();
     int current_height = GetScreenHeight();
     
-    float dpi = get_dpi_scale();
+    Rectangle avatar_rect = calculate_avatar_rect(400);
+
+    float dpi = last_dpi_scale;
     float padding = PADDING * dpi;
     float font_size = FONT_SIZE * dpi;
     float line_height = 30 * dpi;
+    float btnSize = 50 * dpi;
+    float btnX = padding + 220 * dpi;
     
     float y_offset = padding;
+
+    bool mouse_on_buttons_and_that_is_a_reason_why_V_avatar_cant_move = is_ui_visible && (GetMouseX() < (padding + 350 * dpi) && GetMouseY() < (y_offset + btnSize)); 
+
+    if (!mouse_on_buttons_and_that_is_a_reason_why_V_avatar_cant_move) {
+        handle_mouse_drag(avatar_rect);
+    }
     
     std::string state_text = "State: " + Utils::get_name_of_state_by_number(static_cast<int>(current_state));
     DrawText(state_text.c_str(), (int)padding, (int)y_offset, (int)font_size, TEXT_COLOR);
     y_offset += line_height;
     
     std::ostringstream volume_stream;
-    volume_stream << std::fixed << std::setprecision(2) << "Volume: " << volume;
+    volume_stream << std::fixed << std::setprecision(2) << "Volume: " << volume * sensitivity;
     DrawText(volume_stream.str().c_str(), (int)padding, (int)y_offset, (int)font_size, TEXT_COLOR);
     
     render_volume_bar(volume, (int)(padding + 120 * dpi), (int)y_offset);
@@ -173,19 +188,27 @@ void Renderer::render_ui(float volume, float sensitivity) {
     std::ostringstream sensitivity_stream;
     sensitivity_stream << std::fixed << std::setprecision(2) << "Sensitivity: " << sensitivity;
     DrawText(sensitivity_stream.str().c_str(), (int)padding, (int)y_offset, (int)font_size, TEXT_COLOR);
+
+    is_anything_pressed = false;
+
+    if (draw_ui_button({ btnX, y_offset, btnSize, btnSize }, "-", dpi)) sensitivity -= 2.0f * GetFrameTime();
+    if (draw_ui_button({ btnX + btnSize + 5, y_offset, btnSize, btnSize }, "+", dpi)) sensitivity += 2.0f * GetFrameTime();
+
+    if (sensitivity < 0.0f) sensitivity = 0.0f;
+    if (sensitivity > 100.0f) sensitivity = 100.0f;
     
     render_tips(current_width, current_height, dpi, (int)font_size);
     render_fps(current_width, dpi, (int)font_size);
 }
 
 void Renderer::render_volume_bar(float volume, int bar_x, int bar_y) {
-    float dpi = get_dpi_scale();
+    float dpi = last_dpi_scale;
     int bar_width = (int)(VOLUME_BAR_WIDTH * dpi);
     int bar_height = (int)(VOLUME_BAR_HEIGHT * dpi);
     
     DrawRectangle(bar_x, bar_y, bar_width, bar_height, BAR_BG_COLOR);
     
-    float normalized_volume = volume;
+    float normalized_volume = volume * sensitivity;
     if (normalized_volume < 0.0f) normalized_volume = 0.0f;
     if (normalized_volume > 1.0f) normalized_volume = 1.0f;
 
@@ -199,11 +222,52 @@ void Renderer::render_volume_bar(float volume, int bar_x, int bar_y) {
     DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, TEXT_COLOR);
 }
 
-float Renderer::get_dpi_scale() {
+void Renderer::update_dpi_scale() {
     void* hwnd = GetWindowHandle();
-    if (!hwnd) return 1.0f;
+    if (!hwnd) return;
 
-    return winutils.get_dpi_scale(hwnd);
+    int render_width = GetRenderWidth();
+    int render_height = GetRenderHeight();
+    Vector2 window_position = GetWindowPosition();
+
+    if (last_render_width      == render_width      && 
+        last_render_height     == render_height     && 
+        last_window_position.x == window_position.x && 
+        last_window_position.y == window_position.y ) return;
+
+    last_render_width = render_width;
+    last_render_height = render_height;
+    last_window_position = window_position;
+
+    last_dpi_scale = winutils.get_dpi_scale(hwnd);
+}
+
+bool Renderer::draw_ui_button(Rectangle bounds, const char* text, float dpi) {
+    if (!is_ui_visible) return false;
+
+    bool hovered = CheckCollisionPointRec(GetMousePosition(), bounds);
+    bool pressed = false;
+
+    Color col = hovered ? LIGHTGRAY : GRAY;
+
+    if (hovered && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        col = DARKGRAY;
+        pressed = true;
+
+        is_anything_pressed = true;
+    }
+
+    DrawRectangleRec(bounds, col);
+    DrawRectangleLinesEx(bounds, 1, WHITE);
+    
+    int fontSize = (int)(20 * dpi);
+    int textWidth = MeasureText(text, fontSize);
+    DrawText(text, 
+             bounds.x + (bounds.width - textWidth) / 2, 
+             bounds.y + (bounds.height - fontSize) / 2, 
+             fontSize, WHITE);
+
+    return pressed;
 }
 
 void Renderer::render_tips(int screen_width, int screen_height, float dpi, int font_size) {
