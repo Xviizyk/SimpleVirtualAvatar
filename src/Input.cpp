@@ -27,8 +27,8 @@ float Input::get_volume_sensitivity_change() {
     bool plus = WinUtils::is_key_down_global(VK_F10) && is_shift_pressed();
     bool minus = WinUtils::is_key_down_global(VK_F9) && is_shift_pressed();
 
-    if (minus) return -0.1f;
-    if (plus) return 0.1f;
+    if (minus) return -0.05f;
+    if (plus) return 0.05f;
 
     return 0.0f;
 }
