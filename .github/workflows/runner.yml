@@ -22,7 +22,7 @@ jobs:
 
   release:
     name: Create Release
-    needs: [build-windows-amd64, build-windows-arm64, build-linux-amd64, build-linux-arm64, build-macos-amd64, build-macos-arm64]
+    needs: [build-windows-amd64, build-windows-arm64, build-linux-amd64, build-macos-arm64]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
