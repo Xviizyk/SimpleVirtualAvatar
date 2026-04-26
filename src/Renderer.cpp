@@ -165,8 +165,8 @@ void Renderer::render_ui(float volume) {
 
     is_anything_pressed = false;
 
-    if (draw_ui_button({ btnX, y_offset, btnSize, btnSize }, "-", dpi)) sensitivity -= 2.0f * GetFrameTime();
-    if (draw_ui_button({ btnX + btnSize + 5, y_offset, btnSize, btnSize }, "+", dpi)) sensitivity += 2.0f * GetFrameTime();
+    if (render_button({ btnX, y_offset, btnSize, btnSize }, "-", dpi)) sensitivity -= 2.0f * GetFrameTime();
+    if (render_button({ btnX + btnSize + 5, y_offset, btnSize, btnSize }, "+", dpi)) sensitivity += 2.0f * GetFrameTime();
 
     if (sensitivity < 0.0f) sensitivity = 0.0f;
     if (sensitivity > 100.0f) sensitivity = 100.0f;
@@ -175,7 +175,7 @@ void Renderer::render_ui(float volume) {
     render_fps(current_width, dpi, (int)font_size);
 }
 
-bool Renderer::render_ui_button(Rectangle bounds, const char* text, float dpi) {
+bool Renderer::render_button(Rectangle bounds, const char* text, float dpi) {
     if (!is_ui_visible) return false;
 
     bool hovered = CheckCollisionPointRec(GetMousePosition(), bounds);
@@ -352,4 +352,10 @@ void Renderer::update_animation(float delta_time) {
 
 bool Renderer::should_close() const {
     return WindowShouldClose();
+}
+
+void Renderer::shutdown() {
+    if (IsWindowReady()) {
+        CloseWindow();
+    }
 }

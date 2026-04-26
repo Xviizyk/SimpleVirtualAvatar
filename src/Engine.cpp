@@ -52,7 +52,7 @@ void Engine::update() {
 }
 
 void Engine::render() {
-    renderer.draw_avatar(assets, current_volume);
+    renderer.update(assets, current_volume);
 }
 
 void Engine::run() {
