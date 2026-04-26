@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.24)
-project("SimpleVirtualAvatar" VERSION 1.0.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 4.0)
+project("SimpleVirtualAvatar" VERSION 1.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -64,6 +64,26 @@ set(PROJECT_SOURCES
 )
 
 add_executable(SimpleVirtualAvatar ${PROJECT_SOURCES})
+
+option(ENABLE_TRACY "Enable Tracy profiling" OFF)
+
+if(ENABLE_TRACY)
+    include(FetchContent)
+    FetchContent_Declare(
+        tracy
+        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+        GIT_TAG        v0.13.1
+    )
+    FetchContent_MakeAvailable(tracy)
+
+    set(TRACY_CLIENT_SOURCE "${tracy_SOURCE_DIR}/public/TracyClient.cpp")
+
+    target_sources(SimpleVirtualAvatar PRIVATE ${TRACY_CLIENT_SOURCE})
+
+    target_include_directories(SimpleVirtualAvatar PRIVATE "${tracy_SOURCE_DIR}/public")
+    
+    target_compile_definitions(SimpleVirtualAvatar PRIVATE TRACY_ENABLE)
+endif()
 
 target_include_directories(SimpleVirtualAvatar PRIVATE src)
 target_include_directories(SimpleVirtualAvatar SYSTEM PRIVATE

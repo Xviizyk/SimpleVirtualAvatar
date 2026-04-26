@@ -1,5 +1,10 @@
 #include "Engine.hpp"
 
+#ifdef TRACY_ENABLE
+    #include <tracy/Tracy.hpp>
+    #include <iostream>
+#endif
+
 #ifdef _MSVC
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #endif
@@ -57,9 +62,30 @@ void Engine::render() {
 
 void Engine::run() {
     while (isRunning) {
-        process_input();
-        update();
-        render();
+        {
+            #ifdef TRACY_ENABLE
+                ZoneScopedN("Process input");
+            #endif
+            process_input();
+        }
+
+        {
+            #ifdef TRACY_ENABLE
+                ZoneScopedN("Update");
+            #endif
+            update();
+        }
+
+        {
+            #ifdef TRACY_ENABLE
+                ZoneScopedN("Render");
+            #endif
+            render();
+        }
+
+        #ifdef TRACY_ENABLE
+            FrameMark;
+        #endif
     }
 }
 
