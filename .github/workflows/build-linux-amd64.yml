@@ -21,10 +21,10 @@ jobs:
             libxrandr-dev libxi-dev \
             libgl1-mesa-dev libglu1-mesa-dev
       
-      - name: Install CMake 4.x
-        uses: jwlawrence/install-cmake@v1
-        with:
-          cmake-version: '4.3.2'
+      - name: Install CMake 4.3.2 (Linux)
+        run: |
+          wget https://github.com/Kitware/CMake/releases/download/v4.3.2/cmake-4.3.2-linux-x86_64.sh
+          sudo sh cmake-4.3.2-linux-x86_64.sh --prefix=/usr/local --skip-license
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

@@ -13,10 +13,10 @@ jobs:
           submodules: recursive
 
       - name: Install CMake 4.x
-        uses: jwlawrence/install-cmake@v1
-        with:
-          cmake-version: '4.3.2'
-          
+        run: |
+          winget install kitware.cmake --version 4.3.2
+          echo "C:\Program Files\CMake\bin" >> $GITHUB_PATH
+
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       

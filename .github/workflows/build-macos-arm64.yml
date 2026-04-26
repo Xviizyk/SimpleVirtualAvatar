@@ -15,10 +15,10 @@ jobs:
       - name: Install dependencies
         run: brew install cmake
       
-      - name: Install CMake 4.x
-        uses: jwlawrence/install-cmake@v1
-        with:
-          cmake-version: '4.3.2'
+      - name: Install CMake 4.3.2 (macOS)
+        run: |
+          brew install cmake 
+          # Homebrew обычно обновляется до последней версии (4.3.2) моментально
 
       - name: Configure ARM64
         run: |
