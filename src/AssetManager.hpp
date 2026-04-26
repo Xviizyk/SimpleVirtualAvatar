@@ -7,11 +7,18 @@
 
 enum class AvatarState { IDLE, TALKING, SCREAMING };
 
+struct StateFrames {
+    std::vector<Texture2D> normal;
+    std::vector<Texture2D> blink;
+};
+
 class AssetManager {
 private:
     std::unordered_map<std::string, Texture2D> textures;
     std::unordered_map<std::string, Sound> sounds;
     std::string base_path = "assets/";
+
+    StateFrames avatar_assets[3];
 
 public:
     AssetManager() = default;

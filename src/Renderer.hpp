@@ -19,16 +19,21 @@ private:
     Vector2 drag_offset = {0, 0};
     Vector2 avatar_position = {100, 100};
     Vector2 last_window_position = {0, 0};
-    
+
+    char fps_buffer[16];
+
+    float fps_update_timer = 0;
     float avatar_scale = 1.0f;
     float sensitivity = 10.0f;
     float last_dpi_scale = 0.0f;
+    float update_dpi_scale_timer = 0.0f;
 
     bool is_ui_visible;
     bool is_anything_pressed = false;
     bool is_dragging = false;
 
     int max_fps = 0;
+    int cached_fps_x = 0;
 
     int last_render_height = 0;
     int last_render_width = 0;
@@ -60,7 +65,7 @@ private:
 
     void render_avatar(AssetManager& assets, const Rectangle& avatar_rect, bool current_blink_state);
     void render_fps(int screen_width, float dpi, int font_size);
-    void render_tips(int screen_width, int screen_height, float dpi, int font_size);
+    void render_tips(int screen_height, float dpi, int font_size);
     void render_ui(float volume);
     bool render_button(Rectangle bounds, const char* text, float dpi);
     void render_volume_bar(float volume, int bar_x, int bar_y);
@@ -86,5 +91,5 @@ public:
     void shutdown();
     void toggle_ui_visibility();
     void update(AssetManager& assets, float volume);
-    void update_dpi_scale();
+    void update_dpi_scale(float delta_time);
 };
