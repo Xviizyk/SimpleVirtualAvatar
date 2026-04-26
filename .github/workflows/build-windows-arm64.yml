@@ -12,11 +12,6 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Install CMake 4.x
-        run: |
-          winget install kitware.cmake --version 4.3.2
-          echo "C:\Program Files\CMake\bin" >> $GITHUB_PATH
-
       - name: Configure ARM64
         run: |
           cmake -S . -B build `

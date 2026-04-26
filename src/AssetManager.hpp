@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <iostream>
+#include <vector>
 #include "raylib.h"
 
 enum class AvatarState { IDLE, TALKING, SCREAMING };

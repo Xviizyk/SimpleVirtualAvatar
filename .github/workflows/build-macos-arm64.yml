@@ -15,17 +15,12 @@ jobs:
       - name: Install dependencies
         run: brew install cmake
       
-      - name: Install CMake 4.3.2 (macOS)
-        run: |
-          brew install cmake 
-          # Homebrew обычно обновляется до последней версии (4.3.2) моментально
-
       - name: Configure ARM64
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES=arm64
-
+      
       - name: Build
         run: cmake --build build --config Release --parallel
       
