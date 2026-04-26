@@ -306,7 +306,7 @@ void Renderer::update(AssetManager& assets, float volume) {
 
     update_dpi_scale(delta_time);
 
-    if (GetFPS() > max_fps) std::cout << "\r\n" << max_fps;
+    if (GetFPS() > max_fps) std::cout << "\rMax FPS: " << max_fps;
     max_fps = std::max(max_fps, GetFPS());
 
     update_animation(delta_time);

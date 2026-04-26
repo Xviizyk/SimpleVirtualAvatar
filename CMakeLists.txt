@@ -8,8 +8,12 @@ option(CROSS_COMPILE_ARM64 "Кросс-компиляция для ARM64" OFF)
 option(ENABLE_X11 "Включить поддержку X11" ON)
 
 if(MSVC)
-    add_compile_options(/W4 /FS)
+    add_compile_options(/W4 /FS /MT)
+    add_compile_options("$<$<CONFIG:Release>:/Ot;/Oi;/GL;/arch:AVX2>")
+    
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
     
@@ -17,9 +21,6 @@ else()
         add_compile_options(-march=armv8-a -mtune=generic)
     endif()
 endif()
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_GLFW_NO_JOYSTICK")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLFW_NO_JOYSTICK")
 
 set(RAYLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/raylib")
 
