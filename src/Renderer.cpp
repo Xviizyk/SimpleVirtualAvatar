@@ -16,59 +16,36 @@ Renderer::Renderer(int width, int height, const std::string& title)
       current_state     (AvatarState::IDLE) {}
 
 Renderer::~Renderer() {
-    shutdown();
-}
-
-bool Renderer::init() {
-    SetConfigFlags(
-        FLAG_WINDOW_ALWAYS_RUN  |
-        // FLAG_VSYNC_HINT         |
-        FLAG_WINDOW_TRANSPARENT |
-        FLAG_WINDOW_RESIZABLE   |
-        // FLAG_MSAA_4X_HINT       |
-        FLAG_WINDOW_TOPMOST
-    );
-
-    InitWindow(
-        window_width,
-        window_height,
-        window_title.c_str()
-    );
-
-    if (!IsWindowReady()) return false;
-
-    SetTargetFPS      (0);
-    set_ui_visibility (true);
-    return true;
-}
-
-void Renderer::shutdown() {
     if (IsWindowReady()) {
         CloseWindow();
     }
 }
 
-bool Renderer::should_close() const {
-    return WindowShouldClose();
-}
-
-void Renderer::begin_frame() {
-    BeginDrawing();
-}
-
-void Renderer::end_frame() {
-    EndDrawing();
-}
-
-void Renderer::update_animation(float delta_time) {
-    anim.update(delta_time);
-}
-
 Rectangle Renderer::calculate_avatar_rect(int base_size) {
-    float scale = last_dpi_scale * avatar_scale;
-    float size = base_size * scale;
+    float size = base_size * last_dpi_scale * avatar_scale;
 
     return { avatar_position.x, avatar_position.y, size, size };
+}
+
+AvatarState Renderer::get_avatar_state() const {
+    return current_state;
+}
+
+bool Renderer::get_ui_visibility() const {
+    return is_ui_visible;
+}
+
+Color Renderer::get_color_by_state(AvatarState state) {
+    switch (state) {
+        case AvatarState::IDLE:
+            return {100, 200, 100, 255};
+        case AvatarState::TALKING:
+            return {100, 150, 255, 255};
+        case AvatarState::SCREAMING:
+            return {255, 100, 100, 255};
+        default:
+            return WHITE;
+    }
 }
 
 void Renderer::handle_mouse_drag(const Rectangle& avatar_rect) {
@@ -96,34 +73,25 @@ void Renderer::handle_mouse_drag(const Rectangle& avatar_rect) {
     }
 }
 
-void Renderer::draw_avatar(AssetManager& assets, float volume) {
-    float delta_time = Utils::get_delta_time();
+bool Renderer::init() {
+    SetConfigFlags(
+        FLAG_WINDOW_ALWAYS_RUN  |
+        FLAG_WINDOW_TRANSPARENT |
+        FLAG_WINDOW_RESIZABLE   |
+        FLAG_WINDOW_TOPMOST
+    );
 
-    update_dpi_scale();
+    InitWindow(
+        window_width,
+        window_height,
+        window_title.c_str()
+    );
 
-    if (GetFPS() > max_fps) std::cout << "\r\n" << max_fps;
-    max_fps = std::max(max_fps, GetFPS());
+    if (!IsWindowReady()) return false;
 
-    update_animation(delta_time);
-
-    bool current_blink_state = anim.is_blink();
-
-    begin_frame();
-    if (is_ui_visible) {
-        ClearBackground({20, 20, 20, 255});
-    } else {
-        ClearBackground({0, 0, 0, 0});
-    }
-    
-    Rectangle avatar_rect = calculate_avatar_rect(400);
-
-    render_avatar(assets, avatar_rect, current_blink_state);
-    
-    if (is_ui_visible) {
-        render_ui(volume);
-    }
-    
-    end_frame();
+    SetTargetFPS      (0);
+    set_ui_visibility (true);
+    return true;
 }
 
 void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect, bool current_blink_state) {
@@ -153,6 +121,16 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect,
     }
 }
 
+void Renderer::render_fps(int screen_width, float dpi, int font_size) {
+    std::string fps_text = "FPS: " + std::to_string(GetFPS());
+    float padding = PADDING * dpi;
+    int text_width = MeasureText(fps_text.c_str(), font_size);
+    int x = screen_width - text_width - (int)(padding * 1.5f);
+    int y = (int)padding;
+    
+    DrawText(fps_text.c_str(), x, y, font_size, TEXT_COLOR);
+}
+
 void Renderer::render_ui(float volume) {
     int current_width = GetScreenWidth();
     int current_height = GetScreenHeight();
@@ -173,10 +151,6 @@ void Renderer::render_ui(float volume) {
     if (!mouse_on_buttons_and_that_is_a_reason_why_V_avatar_cant_move) {
         handle_mouse_drag(avatar_rect);
     }
-    
-    std::string state_text = "State: " + Utils::get_name_of_state_by_number(static_cast<int>(current_state));
-    DrawText(state_text.c_str(), (int)padding, (int)y_offset, (int)font_size, TEXT_COLOR);
-    y_offset += line_height;
     
     std::ostringstream volume_stream;
     volume_stream << std::fixed << std::setprecision(2) << "Volume: " << volume * sensitivity;
@@ -201,48 +175,7 @@ void Renderer::render_ui(float volume) {
     render_fps(current_width, dpi, (int)font_size);
 }
 
-void Renderer::render_volume_bar(float volume, int bar_x, int bar_y) {
-    float dpi = last_dpi_scale;
-    int bar_width = (int)(VOLUME_BAR_WIDTH * dpi);
-    int bar_height = (int)(VOLUME_BAR_HEIGHT * dpi);
-    
-    DrawRectangle(bar_x, bar_y, bar_width, bar_height, BAR_BG_COLOR);
-    
-    float normalized_volume = volume * sensitivity;
-    if (normalized_volume < 0.0f) normalized_volume = 0.0f;
-    if (normalized_volume > 1.0f) normalized_volume = 1.0f;
-
-    int filled_width = (int)(bar_width * normalized_volume);
-    
-    Color bar_color = BAR_FG_COLOR;
-    if (normalized_volume > 0.7f) bar_color = {255, 200, 100, 255};
-    if (normalized_volume > 0.9f) bar_color = {255, 100, 100, 255};
-    
-    DrawRectangle(bar_x, bar_y, filled_width, bar_height, bar_color);
-    DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, TEXT_COLOR);
-}
-
-void Renderer::update_dpi_scale() {
-    void* hwnd = GetWindowHandle();
-    if (!hwnd) return;
-
-    int render_width = GetRenderWidth();
-    int render_height = GetRenderHeight();
-    Vector2 window_position = GetWindowPosition();
-
-    if (last_render_width      == render_width      && 
-        last_render_height     == render_height     && 
-        last_window_position.x == window_position.x && 
-        last_window_position.y == window_position.y ) return;
-
-    last_render_width = render_width;
-    last_render_height = render_height;
-    last_window_position = window_position;
-
-    last_dpi_scale = winutils.get_dpi_scale(hwnd);
-}
-
-bool Renderer::draw_ui_button(Rectangle bounds, const char* text, float dpi) {
+bool Renderer::render_ui_button(Rectangle bounds, const char* text, float dpi) {
     if (!is_ui_visible) return false;
 
     bool hovered = CheckCollisionPointRec(GetMousePosition(), bounds);
@@ -270,6 +203,28 @@ bool Renderer::draw_ui_button(Rectangle bounds, const char* text, float dpi) {
     return pressed;
 }
 
+void Renderer::render_volume_bar(float volume, int bar_x, int bar_y) {
+    float dpi = last_dpi_scale;
+    int bar_width = (int)(VOLUME_BAR_WIDTH * dpi);
+    int bar_height = (int)(VOLUME_BAR_HEIGHT * dpi);
+    
+    DrawRectangle(bar_x, bar_y, bar_width, bar_height, BAR_BG_COLOR);
+    
+    float normalized_volume = volume * sensitivity;
+    if (normalized_volume < 0.0f) normalized_volume = 0.0f;
+    if (normalized_volume > 1.0f) normalized_volume = 1.0f;
+
+    int filled_width = (int)(bar_width * normalized_volume);
+    
+    Color bar_color = BAR_FG_COLOR;
+    if (normalized_volume > 0.7f) bar_color = {255, 200, 100, 255};
+    if (normalized_volume > 0.9f) bar_color = {255, 100, 100, 255};
+    
+    DrawRectangle(bar_x, bar_y, filled_width, bar_height, bar_color);
+    DrawRectangleLines(bar_x, bar_y, bar_width, bar_height, TEXT_COLOR);
+}
+
+
 void Renderer::render_tips(int screen_width, int screen_height, float dpi, int font_size) {
     const char* tips[] = {
         "F10/F11: Adjust Sensitivity",
@@ -287,45 +242,8 @@ void Renderer::render_tips(int screen_width, int screen_height, float dpi, int f
     }
 }
 
-void Renderer::render_fps(int screen_width, float dpi, int font_size) {
-    std::string fps_text = "FPS: " + std::to_string(GetFPS());
-    float padding = PADDING * dpi;
-    int text_width = MeasureText(fps_text.c_str(), font_size);
-    int x = screen_width - text_width - (int)(padding * 1.5f);
-    int y = (int)padding;
-    
-    DrawText(fps_text.c_str(), x, y, font_size, TEXT_COLOR);
-}
-
 void Renderer::toggle_ui_visibility() {
     set_ui_visibility(!is_ui_visible);
-}
-
-void Renderer::set_ui_visibility(bool visible) {
-    is_ui_visible = visible;
-
-    void* hwnd = GetWindowHandle();
-    if (!hwnd) return;
-
-    if (is_ui_visible) {
-        winutils.set_window_borderless(hwnd, false);
-        winutils.set_overlay_mode(hwnd, false);
-        ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
-    } else {
-        winutils.set_window_borderless(hwnd, true);
-        winutils.set_overlay_mode(hwnd, true);
-        SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
-    }
-}
-
-bool Renderer::get_ui_visibility() const {
-    return is_ui_visible;
-}
-
-void Renderer::set_max_frames(int idle_max, int talk_max, int scream_max) {
-    idle_max_frames = idle_max;
-    talk_max_frames = talk_max;
-    scream_max_frames = scream_max;
 }
 
 void Renderer::set_avatar_state(AvatarState state) {
@@ -348,8 +266,27 @@ void Renderer::set_avatar_state(AvatarState state) {
     }
 }
 
-AvatarState Renderer::get_avatar_state() const {
-    return current_state;
+void Renderer::set_max_frames(int idle_max, int talk_max, int scream_max) {
+    idle_max_frames = idle_max;
+    talk_max_frames = talk_max;
+    scream_max_frames = scream_max;
+}
+
+void Renderer::set_ui_visibility(bool visible) {
+    is_ui_visible = visible;
+
+    void* hwnd = GetWindowHandle();
+    if (!hwnd) return;
+
+    if (is_ui_visible) {
+        winutils.set_window_borderless(hwnd, false);
+        winutils.set_overlay_mode(hwnd, false);
+        ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
+    } else {
+        winutils.set_window_borderless(hwnd, true);
+        winutils.set_overlay_mode(hwnd, true);
+        SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH);
+    }
 }
 
 void Renderer::set_window_title(const std::string& title) {
@@ -359,15 +296,60 @@ void Renderer::set_window_title(const std::string& title) {
     }
 }
 
-Color Renderer::get_color_by_state(AvatarState state) {
-    switch (state) {
-        case AvatarState::IDLE:
-            return {100, 200, 100, 255};
-        case AvatarState::TALKING:
-            return {100, 150, 255, 255};
-        case AvatarState::SCREAMING:
-            return {255, 100, 100, 255};
-        default:
-            return WHITE;
+void Renderer::update(AssetManager& assets, float volume) {
+    float delta_time = Utils::get_delta_time();
+
+    update_dpi_scale();
+
+    if (GetFPS() > max_fps) std::cout << "\r\n" << max_fps;
+    max_fps = std::max(max_fps, GetFPS());
+
+    update_animation(delta_time);
+
+    bool current_blink_state = anim.is_blink();
+
+    BeginDrawing();
+    if (is_ui_visible) {
+        ClearBackground({20, 20, 20, 255});
+    } else {
+        ClearBackground({0, 0, 0, 0});
     }
+    
+    Rectangle avatar_rect = calculate_avatar_rect(400);
+
+    render_avatar(assets, avatar_rect, current_blink_state);
+    
+    if (is_ui_visible) {
+        render_ui(volume);
+    }
+    
+    EndDrawing();
+}
+
+void Renderer::update_dpi_scale() {
+    void* hwnd = GetWindowHandle();
+    if (!hwnd) return;
+
+    int render_width = GetRenderWidth();
+    int render_height = GetRenderHeight();
+    Vector2 window_position = GetWindowPosition();
+
+    if (last_render_width      == render_width      && 
+        last_render_height     == render_height     && 
+        last_window_position.x == window_position.x && 
+        last_window_position.y == window_position.y ) return;
+
+    last_render_width = render_width;
+    last_render_height = render_height;
+    last_window_position = window_position;
+
+    last_dpi_scale = winutils.get_dpi_scale(hwnd);
+}
+
+void Renderer::update_animation(float delta_time) {
+    anim.update(delta_time);
+}
+
+bool Renderer::should_close() const {
+    return WindowShouldClose();
 }
