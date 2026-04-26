@@ -16,11 +16,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential cmake \
+            build-essential \
             libx11-dev libxcursor-dev libxinerama-dev \
             libxrandr-dev libxi-dev \
             libgl1-mesa-dev libglu1-mesa-dev
       
+      - name: Install CMake 4.x
+        uses: jwlawrence/install-cmake@v1
+        with:
+          cmake-version: '4.3.2'
+
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       

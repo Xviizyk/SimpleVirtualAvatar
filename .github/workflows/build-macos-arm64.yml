@@ -15,12 +15,17 @@ jobs:
       - name: Install dependencies
         run: brew install cmake
       
+      - name: Install CMake 4.x
+        uses: jwlawrence/install-cmake@v1
+        with:
+          cmake-version: '4.3.2'
+
       - name: Configure ARM64
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES=arm64
-      
+
       - name: Build
         run: cmake --build build --config Release --parallel
       

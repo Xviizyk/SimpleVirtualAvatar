@@ -12,6 +12,11 @@ jobs:
         with:
           submodules: recursive
       
+      - name: Install CMake 4.x
+        uses: jwlawrence/install-cmake@v1
+        with:
+          cmake-version: '4.3.2'
+
       - name: Configure ARM64
         run: |
           cmake -S . -B build `
