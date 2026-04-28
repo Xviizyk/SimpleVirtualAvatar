@@ -2,7 +2,6 @@
 
 #ifdef TRACY_ENABLE
     #include <tracy/Tracy.hpp>
-    #include <iostream>
 #endif
 
 #ifdef _MSVC
@@ -10,21 +9,26 @@
 #endif
 
 bool Engine::init() {
+    ConfigManager::Load();
+
     if (!renderer.init()) {
         return false;
     }
-    
+
     if (!audio.init()) {
         renderer.shutdown();
         return false;
     }
-    
-    assets.set_base_path("../../img/");
-    assets.load_avatar_state(AvatarState::IDLE, IDLE_MAX_FRAMES, "idle");
-    assets.load_avatar_state(AvatarState::TALKING, TALK_MAX_FRAMES, "talk");
-    assets.load_avatar_state(AvatarState::SCREAMING, SCREAM_MAX_FRAMES, "scream");
 
-    renderer.set_max_frames(IDLE_MAX_FRAMES, TALK_MAX_FRAMES, SCREAM_MAX_FRAMES);
+    assets.set_base_path(ConfigManager::GetAssetsDir().string());
+
+    const auto& cfg = ConfigManager::Get();
+    assets.load_avatar_state(AvatarState::IDLE, cfg.maxIdleFrames, "idle");
+    assets.load_avatar_state(AvatarState::TALKING, cfg.maxTalkFrames, "talk");
+    assets.load_avatar_state(AvatarState::SCREAMING, cfg.maxScreamFrames, "scream");
+
+    renderer.set_max_frames(cfg.maxIdleFrames, cfg.maxTalkFrames, cfg.maxScreamFrames);
+    renderer.set_avatar_state(AvatarState::IDLE);
 
     isRunning = true;
     return true;
@@ -41,45 +45,56 @@ void Engine::process_input() {
 }
 
 void Engine::update() {
-    current_volume = Utils::smooth_volume(current_volume, audio.rms);
-    
-    float final_vol = current_volume * sensitivity;
+    const auto& cfg = ConfigManager::Get();
 
+    renderer.set_max_frames(cfg.maxIdleFrames, cfg.maxTalkFrames, cfg.maxScreamFrames);
+
+    current_volume = Utils::smooth_volume(current_volume, audio.rms);
+    sensitivity = renderer.get_sensitivity();
+
+    const float final_vol = current_volume * sensitivity;
+
+    AvatarState next_state = AvatarState::IDLE;
     if (final_vol < 0.2f) {
-        current_state = AvatarState::IDLE;
+        next_state = AvatarState::IDLE;
     } else if (final_vol < 0.7f) {
-        current_state = AvatarState::TALKING;
+        next_state = AvatarState::TALKING;
     } else {
-        current_state = AvatarState::SCREAMING;
+        next_state = AvatarState::SCREAMING;
     }
-    
+
+    if (next_state != current_state) {
+        current_state = next_state;
+        shake.Trigger(cfg.shakeStrength, cfg.shakeDuration, cfg.shakeMode);
+    }
+
     renderer.set_avatar_state(current_state);
 }
 
 void Engine::render() {
-    renderer.update(assets, current_volume);
+    renderer.update(assets, current_volume, menuBar, spriteEditor, shaderEditor, shake);
 }
 
 void Engine::run() {
     while (isRunning) {
         {
-            #ifdef TRACY_ENABLE
-                ZoneScopedN("Process input");
-            #endif
+        #ifdef TRACY_ENABLE
+            ZoneScopedN("Process input");
+        #endif
             process_input();
         }
 
         {
-            #ifdef TRACY_ENABLE
-                ZoneScopedN("Update");
-            #endif
+        #ifdef TRACY_ENABLE
+            ZoneScopedN("Update");
+        #endif
             update();
         }
 
         {
-            #ifdef TRACY_ENABLE
-                ZoneScopedN("Render");
-            #endif
+        #ifdef TRACY_ENABLE
+            ZoneScopedN("Render");
+        #endif
             render();
         }
 

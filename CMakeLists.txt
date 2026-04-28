@@ -52,15 +52,20 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/miniaudio/miniaudio.h")
 endif()
 
 set(PROJECT_SOURCES
-    src/Animation.cpp src/Animation.hpp
+    src/Animation.cpp    src/Animation.hpp
     src/AssetManager.cpp src/AssetManager.hpp
-    src/AudioInput.cpp src/AudioInput.hpp
-    src/Engine.cpp src/Engine.hpp
-    src/Input.cpp src/Input.hpp
+    src/AudioInput.cpp   src/AudioInput.hpp
+    src/Config.cpp       src/Config.hpp
+    src/Engine.cpp       src/Engine.hpp
+    src/Input.cpp        src/Input.hpp
     src/main.cpp
-    src/Renderer.cpp src/Renderer.hpp
-    src/Utils.cpp src/Utils.hpp
-    src/WinUtils.cpp src/WinUtils.hpp
+    src/MenuBar.cpp      src/MenuBar.hpp
+    src/Renderer.cpp     src/Renderer.hpp
+    src/ShaderEditor.cpp src/ShaderEditor.hpp
+    src/Shake.cpp        src/Shake.hpp
+    src/SpriteEditor.cpp src/SpriteEditor.hpp
+    src/Utils.cpp        src/Utils.hpp
+    src/WinUtils.cpp     src/WinUtils.hpp
 )
 
 add_executable(SimpleVirtualAvatar ${PROJECT_SOURCES})

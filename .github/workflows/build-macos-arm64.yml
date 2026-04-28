@@ -1,34 +1,34 @@
-name: Build macOS ARM64
+# name: Build macOS ARM64
 
-on:
-  workflow_call:
+# on:
+#   workflow_call:
 
-jobs:
-  build:
-    name: macOS ARM64
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+# jobs:
+#   build:
+#     name: macOS ARM64
+#     runs-on: macos-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#         with:
+#           submodules: recursive
       
-      - name: Install dependencies
-        run: brew install cmake
+#       - name: Install dependencies
+#         run: brew install cmake
       
-      - name: Configure ARM64
-        run: |
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES=arm64
+#       - name: Configure ARM64
+#         run: |
+#           cmake -S . -B build \
+#             -DCMAKE_BUILD_TYPE=Release \
+#             -DCMAKE_OSX_ARCHITECTURES=arm64
       
-      - name: Build
-        run: cmake --build build --config Release --parallel
+#       - name: Build
+#         run: cmake --build build --config Release --parallel
       
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: SimpleVAvatar-macos-arm64
-          path: |
-            build/SimpleVirtualAvatar
-            build/SimpleVirtualAvatar.app
-          if-no-files-found: warn
+#       - name: Upload artifacts
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: SimpleVAvatar-macos-arm64
+#           path: |
+#             build/SimpleVirtualAvatar
+#             build/SimpleVirtualAvatar.app
+#           if-no-files-found: warn

@@ -1,8 +1,10 @@
 #include "WinUtils.hpp"
+#include <iostream>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
+    #include <commdlg.h>
 
     float WinUtils::get_dpi_scale(void* windowHandle) {
         HWND hwnd = (HWND)windowHandle;
@@ -130,6 +132,32 @@
         );
     }
 
+    bool WinUtils::open_file_dialog(void* windowHandle, std::string& outPath) {
+        char fileName[MAX_PATH] = {};
+        OPENFILENAMEA ofn{};
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = (HWND)windowHandle;
+        ofn.lpstrFilter =
+            "Image Files\0*.png;*.jpg;*.jpeg;*.bmp;*.tga\0"
+            "All Files\0*.*\0";
+        ofn.lpstrFile = fileName;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+        ofn.lpstrTitle = "Choose sprite image";
+
+        if (GetOpenFileNameA(&ofn)) {
+            outPath = fileName;
+            return true;
+        }
+        return false;
+    }
+
+    std::string WinUtils::get_appdata_path() {
+        const char* appData = getenv("APPDATA");
+        if (appData) return std::string(appData);
+        return ".";
+    }
+
 #else
     float WinUtils::get_dpi_scale(void*) { return 1.0f; }
     bool WinUtils::is_key_down_global(int) { return false; }
@@ -139,4 +167,10 @@
     void WinUtils::set_overlay_mode(void*, bool) {}
     void WinUtils::set_window_borderless(void*, bool) {}
     void WinUtils::make_window_ghost(void*) {}
+    bool WinUtils::open_file_dialog(void*, std::string&) { return false; }
+    std::string WinUtils::get_appdata_path() {
+        const char* home = getenv("HOME");
+        if (home) return std::string(home) + "/.config";
+        return ".";
+    }
 #endif

@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 
 class WinUtils {
 public:
@@ -10,4 +11,6 @@ public:
     static bool is_key_down_global(int vKey);
     void set_window_borderless(void*, bool);
     static bool is_shift_pressed_global();
+    static bool open_file_dialog(void* windowHandle, std::string& outPath);
+    static std::string get_appdata_path();
 };
