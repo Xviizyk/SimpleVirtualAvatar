@@ -1,201 +1,274 @@
-cmake_minimum_required(VERSION 3.31.6)
-project("SimpleVirtualAvatar" VERSION 1.5.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.25)
 
+if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+endif()
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Project declaration
+# ──────────────────────────────────────────────────────────────────────────────
+project(SimpleVirtualAvatar
+    VERSION     1.5.0
+    LANGUAGES   C CXX
+    DESCRIPTION "A simple virtual avatar rendering engine"
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Global standards & guards
+# ──────────────────────────────────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(CROSS_COMPILE_ARM64 "Кросс-компиляция для ARM64" OFF)
-option(ENABLE_X11 "Включить поддержку X11" ON)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR
+        "In-source builds are not allowed.\n"
+        "Please create a separate build directory:\n"
+        "  cmake -B build && cmake --build build"
+    )
+endif()
 
-if(MSVC)
-    add_compile_options(/W4 /FS /MT)
-    add_compile_options("$<$<CONFIG:Release>:/Ot;/Oi;/GL;/arch:AVX2>")
-    
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
-    
-    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR CROSS_COMPILE_ARM64)
-        add_compile_options(-march=armv8-a -mtune=generic)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "No build type specified — defaulting to Release")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+        Debug Release RelWithDebInfo MinSizeRel)
+endif()
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  User options
+# ──────────────────────────────────────────────────────────────────────────────
+option(ENABLE_TRACY          "Enable Tracy profiler integration"   OFF)
+option(ENABLE_X11            "Enable X11 display backend (Linux)" ON)
+option(CROSS_COMPILE_ARM64   "Cross-compile for ARM64 target"     OFF)
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  CPM.cmake – package manager bootstrap
+# ──────────────────────────────────────────────────────────────────────────────
+set(CPM_VERSION "0.40.0")
+set(CPM_CACHE_FILE "${CMAKE_BINARY_DIR}/CPM_${CPM_VERSION}.cmake")
+
+if(NOT EXISTS "${CPM_CACHE_FILE}")
+    message(STATUS "Downloading CPM.cmake v${CPM_VERSION}…")
+    file(DOWNLOAD
+        "https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_VERSION}/CPM.cmake"
+        "${CPM_CACHE_FILE}"
+        EXPECTED_HASH SHA256=7b354f3a5976c4626c876850c93944e52c83ec59a159ae5de5be7983f0e17a2a
+        STATUS _cpm_status
+    )
+    list(GET _cpm_status 0 _cpm_error_code)
+    if(NOT _cpm_error_code EQUAL 0)
+        list(GET _cpm_status 1 _cpm_error_msg)
+        message(FATAL_ERROR "Failed to download CPM.cmake: ${_cpm_error_msg}")
     endif()
 endif()
 
-set(RAYLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/raylib")
+include("${CPM_CACHE_FILE}")
 
-if(EXISTS "${RAYLIB_PATH}/CMakeLists.txt")
-    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
-    set(GLFW_JOYSTICK_LINUX OFF CACHE BOOL "" FORCE)
-    
-    if(CROSS_COMPILE_ARM64)
-        set(GLFW_USE_WAYLAND OFF CACHE BOOL "" FORCE)
-        set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
-    endif()
-    
-    add_subdirectory("${RAYLIB_PATH}" raylib)
-    
-    if(TARGET raylib)
-        if(NOT MSVC)
-            target_compile_options(raylib PRIVATE -w)
-        else()
-            target_compile_options(raylib PRIVATE /W0)
-        endif()
-    endif()
-else()
-    find_package(raylib REQUIRED)
-endif()
-
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/miniaudio/miniaudio.h")
-    message(FATAL_ERROR "miniaudio.h missing. Check external/miniaudio/")
-endif()
-
-set(PROJECT_SOURCES
-    src/Animation.cpp    src/Animation.hpp
-    src/AssetManager.cpp src/AssetManager.hpp
-    src/AudioInput.cpp   src/AudioInput.hpp
-    src/Config.cpp       src/Config.hpp
-    src/Engine.cpp       src/Engine.hpp
-    src/Input.cpp        src/Input.hpp
-    src/main.cpp
-    src/MenuBar.cpp      src/MenuBar.hpp
-    src/Renderer.cpp     src/Renderer.hpp
-    src/ShaderEditor.cpp src/ShaderEditor.hpp
-    src/Shake.cpp        src/Shake.hpp
-    src/SpriteEditor.cpp src/SpriteEditor.hpp
-    src/Utils.cpp        src/Utils.hpp
-    src/WinUtils.cpp     src/WinUtils.hpp
+# ──────────────────────────────────────────────────────────────────────────────
+#  Third-party dependencies
+# ──────────────────────────────────────────────────────────────────────────────
+CPMAddPackage(
+    NAME        raylib
+    VERSION     6.0
+    GITHUB_REPOSITORY raysan5/raylib
+    OPTIONS
+        "BUILD_EXAMPLES OFF"
+        "BUILD_GAMES    OFF"
+        "CUSTOM_RGB_BASE_FRAMEBUFFER ON"
 )
 
-add_executable(SimpleVirtualAvatar ${PROJECT_SOURCES})
-
-option(ENABLE_TRACY "Enable Tracy profiling" OFF)
+CPMAddPackage(
+    NAME        miniaudio
+    VERSION     0.11.25
+    GITHUB_REPOSITORY mackron/miniaudio
+    DOWNLOAD_ONLY YES
+)
 
 if(ENABLE_TRACY)
-    include(FetchContent)
-    FetchContent_Declare(
-        tracy
-        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-        GIT_TAG        v0.13.1
+    CPMAddPackage(
+        NAME        tracy
+        VERSION     0.11.1
+        GITHUB_REPOSITORY wolfpld/tracy
+        OPTIONS
+            "TRACY_ENABLE    ON"
+            "TRACY_ON_DEMAND ON"
     )
-    FetchContent_MakeAvailable(tracy)
-
-    set(TRACY_CLIENT_SOURCE "${tracy_SOURCE_DIR}/public/TracyClient.cpp")
-
-    target_sources(SimpleVirtualAvatar PRIVATE ${TRACY_CLIENT_SOURCE})
-
-    target_include_directories(SimpleVirtualAvatar PRIVATE "${tracy_SOURCE_DIR}/public")
-    
-    target_compile_definitions(SimpleVirtualAvatar PRIVATE TRACY_ENABLE)
 endif()
 
-target_include_directories(SimpleVirtualAvatar PRIVATE src)
-target_include_directories(SimpleVirtualAvatar SYSTEM PRIVATE
-    ${RAYLIB_PATH}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/external/miniaudio
+# ──────────────────────────────────────────────────────────────────────────────
+#  Main executable
+# ──────────────────────────────────────────────────────────────────────────────
+file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
+    "src/*.cpp"
+    "src/*.hpp"
+    "src/*.h"
 )
 
-target_link_libraries(SimpleVirtualAvatar PRIVATE raylib)
+if(NOT PROJECT_SOURCES)
+    message(FATAL_ERROR "No source files found under src/. Nothing to build.")
+endif()
 
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Include paths
+# ──────────────────────────────────────────────────────────────────────────────
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        src
+    SYSTEM PRIVATE
+        "${miniaudio_SOURCE_DIR}"
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Compiler warnings  (shared interface target keeps things DRY)
+# ──────────────────────────────────────────────────────────────────────────────
+add_library(project_warnings INTERFACE)
+
+if(MSVC)
+    target_compile_options(project_warnings INTERFACE
+        /W4
+        /FS
+        /MT
+        /EHsc
+        /utf-8
+        /permissive-
+    )
+else()
+    target_compile_options(project_warnings INTERFACE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wshadow
+        -Wnon-virtual-dtor
+        -Wold-style-cast
+        -Wcast-align
+        -Woverloaded-virtual
+        -Wmisleading-indentation
+    )
+endif()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Optimisation flags  (Release / RelWithDebInfo only)
+# ──────────────────────────────────────────────────────────────────────────────
+add_library(project_optimizations INTERFACE)
+
+if(MSVC)
+    target_compile_options(project_optimizations INTERFACE
+        $<$<CONFIG:Release,RelWithDebInfo>:/O2 /Ot /Oi /GL /arch:AVX2>
+    )
+    target_link_options(project_optimizations INTERFACE
+        $<$<CONFIG:Release,RelWithDebInfo>:/LTCG>
+    )
+else()
+    target_compile_options(project_optimizations INTERFACE
+        $<$<CONFIG:Release>:-O3 -DNDEBUG>
+        $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
+        $<$<CONFIG:Debug>:-O0 -g>
+    )
+
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$" OR CROSS_COMPILE_ARM64)
+        target_compile_options(project_optimizations INTERFACE
+            -march=armv8-a -mtune=generic
+        )
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+        target_compile_options(project_optimizations INTERFACE
+            $<$<CONFIG:Release,RelWithDebInfo>:-march=native>
+        )
+    endif()
+endif()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE project_optimizations)
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Platform-specific linking
+# ──────────────────────────────────────────────────────────────────────────────
 if(WIN32)
-    target_link_libraries(SimpleVirtualAvatar PRIVATE winmm gdi32 opengl32 user32 shell32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        winmm gdi32 opengl32 user32 shell32
+    )
     if(NOT MSVC)
-        target_link_options(SimpleVirtualAvatar PRIVATE -static -static-libgcc -static-libstdc++)
-        target_link_options(SimpleVirtualAvatar PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-mwindows>")
+        target_link_options(${PROJECT_NAME} PRIVATE
+            -static
+            $<$<NOT:$<CONFIG:Debug>>:-mwindows>
+        )
     endif()
 
 elseif(APPLE)
-    target_link_libraries(SimpleVirtualAvatar PRIVATE pthread "-framework Cocoa" "-framework IOKit" "-framework CoreVideo" "-framework OpenGL")
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+        "-framework OpenGL"
+    )
 
 else()
-    target_link_libraries(SimpleVirtualAvatar PRIVATE pthread dl m)
-    
+    target_link_libraries(${PROJECT_NAME} PRIVATE pthread dl m)
+
     if(ENABLE_X11)
-        find_package(X11 REQUIRED)
-        if(X11_FOUND)
-            target_link_libraries(SimpleVirtualAvatar PRIVATE ${X11_LIBRARIES})
-            target_include_directories(SimpleVirtualAvatar SYSTEM PRIVATE ${X11_INCLUDE_DIR})
-            message(STATUS "X11 найден и включен")
-        else()
-            message(WARNING "X11 не найден. Приложение может не работать на Linux без X11")
-        endif()
-    endif()
-    
-    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-        target_link_libraries(SimpleVirtualAvatar PRIVATE Xrandr Xinerama Xcursor Xi GL)
-    else()
-        target_link_libraries(SimpleVirtualAvatar PRIVATE GL)
-        
-        find_library(XRANDR_LIB Xrandr)
-        find_library(XINERAMA_LIB Xinerama)
-        find_library(XCURSOR_LIB Xcursor)
-        find_library(XI_LIB Xi)
-        
-        if(XRANDR_LIB)
-            target_link_libraries(SimpleVirtualAvatar PRIVATE ${XRANDR_LIB})
-        endif()
-        if(XINERAMA_LIB)
-            target_link_libraries(SimpleVirtualAvatar PRIVATE ${XINERAMA_LIB})
-        endif()
-        if(XCURSOR_LIB)
-            target_link_libraries(SimpleVirtualAvatar PRIVATE ${XCURSOR_LIB})
-        endif()
-        if(XI_LIB)
-            target_link_libraries(SimpleVirtualAvatar PRIVATE ${XI_LIB})
-        endif()
+        find_package(X11 REQUIRED COMPONENTS Xrandr Xinerama Xcursor Xi)
+        target_link_libraries(${PROJECT_NAME} PRIVATE
+            X11::X11
+            X11::Xrandr
+            X11::Xinerama
+            X11::Xcursor
+            X11::Xi
+            GL
+        )
     endif()
 endif()
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Core library linkage
+# ──────────────────────────────────────────────────────────────────────────────
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Optional: Tracy profiler
+# ──────────────────────────────────────────────────────────────────────────────
+if(ENABLE_TRACY)
+    target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
+        "${tracy_SOURCE_DIR}/public"
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE TracyClient)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TRACY_ENABLE)
+endif()
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Install rules
+# ──────────────────────────────────────────────────────────────────────────────
+include(GNUInstallDirs)
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Configuration summary
+# ──────────────────────────────────────────────────────────────────────────────
+macro(summary_row label value)
+    string(LENGTH "${label}" _llen)
+    string(LENGTH "${value}" _vlen)
+    math(EXPR _pad "20 - ${_llen}")
+    string(REPEAT " " ${_pad} _spaces)
+    message(STATUS "║  ${label}${_spaces}${value}")
+endmacro()
 
 message(STATUS "")
-message(STATUS "╔════════════════════════════════════════════════════════╗")
-message(STATUS "║         SimpleVirtualAvatar Configuration              ║")
-message(STATUS "╠════════════════════════════════════════════════════════╣")
-message(STATUS "│ Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "│ Compiler: ${CMAKE_CXX_COMPILER}")
-message(STATUS "│ C++ Standard: ${CMAKE_CXX_STANDARD}")
-message(STATUS "│")
-message(STATUS "│ Platform:")
-
-if(WIN32)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        message(STATUS "│   Windows x86_64")
-    else()
-        message(STATUS "│   Windows ARM64")
-    endif()
-elseif(APPLE)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        message(STATUS "│   macOS x86_64")
-    else()
-        message(STATUS "│   macOS ARM64")
-    endif()
-else()
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        message(STATUS "│   Linux x86_64")
-    else()
-        message(STATUS "│   Linux ARM64")
-    endif()
-    if(ENABLE_X11)
-        message(STATUS "│   X11: ✓ Enabled")
-    else()
-        message(STATUS "│   X11: ✗ Disabled")
-    endif()
-endif()
-
-message(STATUS "│")
-message(STATUS "│ Libraries:")
-message(STATUS "│   raylib: Available")
-message(STATUS "│   miniaudio: Available")
-
-if(ENABLE_X11 AND NOT WIN32 AND NOT APPLE AND X11_FOUND)
-    message(STATUS "│   X11: Available")
-endif()
-
-message(STATUS "│")
-if(CROSS_COMPILE_ARM64)
-    message(STATUS "│ Cross-compilation: ARM64")
-    message(STATUS "│ Flags: -march=armv8-a -mtune=generic")
-endif()
-
-message(STATUS "╚════════════════════════════════════════════════════════╝")
+message(STATUS "╔══════════════════════════════════════╗")
+message(STATUS "║   ${PROJECT_NAME} — Build Summary")
+message(STATUS "╠══════════════════════════════════════╣")
+summary_row("Version"     "${PROJECT_VERSION}")
+summary_row("Build type"  "${CMAKE_BUILD_TYPE}")
+summary_row("Compiler"    "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+summary_row("System"      "${CMAKE_SYSTEM_NAME} / ${CMAKE_SYSTEM_PROCESSOR}")
+summary_row("C++ standard" "C++${CMAKE_CXX_STANDARD}")
+message(STATUS "║")
+summary_row("Tracy"       "${ENABLE_TRACY}")
+summary_row("X11"         "${ENABLE_X11}")
+summary_row("ARM64 xcomp" "${CROSS_COMPILE_ARM64}")
+message(STATUS "╚══════════════════════════════════════╝")
 message(STATUS "")

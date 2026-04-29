@@ -74,6 +74,9 @@ bool Renderer::init() {
         FLAG_WINDOW_ALWAYS_RUN |
         FLAG_WINDOW_TRANSPARENT |
         FLAG_WINDOW_RESIZABLE |
+        #ifdef NDEBUG
+        FLAG_VSYNC_HINT |
+        #endif
         FLAG_WINDOW_TOPMOST
     );
 
