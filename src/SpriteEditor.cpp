@@ -1,6 +1,6 @@
 #include "SpriteEditor.hpp"
 #include "raylib.h"
-#include "WinUtils.hpp"
+#include "OsUtils.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -92,7 +92,7 @@ void SpriteEditor::SyncToConfigAndReload(AssetManager& assets) {
 }
 
 bool SpriteEditor::OpenFileDialog(std::string& outPath) const {
-    return WinUtils::open_file_dialog(GetWindowHandle(), outPath);
+    return OsUtils::open_file_dialog(GetWindowHandle(), outPath);
 }
 
 bool SpriteEditor::AssignImageToSlot(int index, const std::string& sourcePath, AssetManager& assets) {

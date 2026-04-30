@@ -8,10 +8,16 @@ endif()
 #  Project declaration
 # ──────────────────────────────────────────────────────────────────────────────
 project(SimpleVirtualAvatar
-    VERSION     1.5.0
+    VERSION     2.1.0
     LANGUAGES   C CXX
     DESCRIPTION "A simple virtual avatar rendering engine"
 )
+
+if(WIN32)
+    if(MSVC)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
+endif()
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Global standards & guards
@@ -39,63 +45,22 @@ endif()
 # ──────────────────────────────────────────────────────────────────────────────
 #  User options
 # ──────────────────────────────────────────────────────────────────────────────
-option(ENABLE_TRACY          "Enable Tracy profiler integration"   OFF)
+if(LINUX)
 option(ENABLE_X11            "Enable X11 display backend (Linux)" ON)
 option(CROSS_COMPILE_ARM64   "Cross-compile for ARM64 target"     OFF)
+endif()
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  CPM.cmake – package manager bootstrap
 # ──────────────────────────────────────────────────────────────────────────────
-set(CPM_VERSION "0.40.0")
-set(CPM_CACHE_FILE "${CMAKE_BINARY_DIR}/CPM_${CPM_VERSION}.cmake")
-
-if(NOT EXISTS "${CPM_CACHE_FILE}")
-    message(STATUS "Downloading CPM.cmake v${CPM_VERSION}…")
-    file(DOWNLOAD
-        "https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_VERSION}/CPM.cmake"
-        "${CPM_CACHE_FILE}"
-        EXPECTED_HASH SHA256=7b354f3a5976c4626c876850c93944e52c83ec59a159ae5de5be7983f0e17a2a
-        STATUS _cpm_status
-    )
-    list(GET _cpm_status 0 _cpm_error_code)
-    if(NOT _cpm_error_code EQUAL 0)
-        list(GET _cpm_status 1 _cpm_error_msg)
-        message(FATAL_ERROR "Failed to download CPM.cmake: ${_cpm_error_msg}")
-    endif()
-endif()
-
-include("${CPM_CACHE_FILE}")
+include(cmake/CPM.cmake)
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Third-party dependencies
 # ──────────────────────────────────────────────────────────────────────────────
-CPMAddPackage(
-    NAME        raylib
-    VERSION     6.0
-    GITHUB_REPOSITORY raysan5/raylib
-    OPTIONS
-        "BUILD_EXAMPLES OFF"
-        "BUILD_GAMES    OFF"
-        "CUSTOM_RGB_BASE_FRAMEBUFFER ON"
-)
-
-CPMAddPackage(
-    NAME        miniaudio
-    VERSION     0.11.25
-    GITHUB_REPOSITORY mackron/miniaudio
-    DOWNLOAD_ONLY YES
-)
-
-if(ENABLE_TRACY)
-    CPMAddPackage(
-        NAME        tracy
-        VERSION     0.11.1
-        GITHUB_REPOSITORY wolfpld/tracy
-        OPTIONS
-            "TRACY_ENABLE    ON"
-            "TRACY_ON_DEMAND ON"
-    )
-endif()
+CPMAddPackage("gh:btzy/nativefiledialog-extended@1.3.0")
+CPMAddPackage("gh:raysan5/raylib#6.0")
+CPMAddPackage("gh:mackron/miniaudio#0.11.25")
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Main executable
@@ -108,6 +73,14 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
 
 if(NOT PROJECT_SOURCES)
     message(FATAL_ERROR "No source files found under src/. Nothing to build.")
+endif()
+
+find_package(OpenGL REQUIRED)
+
+if(OPENGL_FOUND)
+    message(STATUS "OpenGL found: ${OPENGL_LIBRARIES}")
+else()
+    message(FATAL_ERROR "OpenGL library not found! Please install OpenGL drivers.")
 endif()
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
@@ -131,7 +104,6 @@ if(MSVC)
     target_compile_options(project_warnings INTERFACE
         /W4
         /FS
-        /MT
         /EHsc
         /utf-8
         /permissive-
@@ -148,7 +120,7 @@ else()
         -Woverloaded-virtual
         -Wmisleading-indentation
     )
-endif()
+endif() 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
 
@@ -166,7 +138,7 @@ if(MSVC)
     )
 else()
     target_compile_options(project_optimizations INTERFACE
-        $<$<CONFIG:Release>:-O3 -DNDEBUG>
+        $<$<CONFIG:Release>:-O2 -DNDEBUG>
         $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
         $<$<CONFIG:Debug>:-O0 -g>
     )
@@ -189,8 +161,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE project_optimizations)
 # ──────────────────────────────────────────────────────────────────────────────
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        winmm gdi32 opengl32 user32 shell32
+        opengl32 ole32 uuid
     )
+    # target_link_libraries(${PROJECT_NAME} PRIVATE
+    #     winmm gdi32 opengl32 shell32 ole32 uuid
+    # )
     if(NOT MSVC)
         target_link_options(${PROJECT_NAME} PRIVATE
             -static
@@ -225,18 +200,7 @@ endif()
 # ──────────────────────────────────────────────────────────────────────────────
 #  Core library linkage
 # ──────────────────────────────────────────────────────────────────────────────
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
-
-# ──────────────────────────────────────────────────────────────────────────────
-#  Optional: Tracy profiler
-# ──────────────────────────────────────────────────────────────────────────────
-if(ENABLE_TRACY)
-    target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
-        "${tracy_SOURCE_DIR}/public"
-    )
-    target_link_libraries(${PROJECT_NAME} PRIVATE TracyClient)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE TRACY_ENABLE)
-endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib nfd)
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Install rules

@@ -1,5 +1,5 @@
 #include "Config.hpp"
-#include "WinUtils.hpp"
+#include "OsUtils.hpp"
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 Config ConfigManager::config;
 
 fs::path ConfigManager::GetAppDataRoot() {
-    return fs::path(WinUtils::get_appdata_path());
+    return fs::path(OsUtils::get_appdata_path());
 }
 
 fs::path ConfigManager::GetAppDir() {

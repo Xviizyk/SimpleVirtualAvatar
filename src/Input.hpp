@@ -2,7 +2,6 @@
 
 class Input {
 public:
-    Input() = default;
-    bool is_shift_pressed();
-    bool is_interface_toggled();
+    static bool is_shift_pressed();
+    static bool is_interface_toggled();
 };

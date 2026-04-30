@@ -7,7 +7,8 @@
 #include "Shake.hpp"
 #include "ShaderEditor.hpp"
 #include "SpriteEditor.hpp"
-#include "WinUtils.hpp"
+#include "OsUtils.hpp"
+
 #include "raylib.h"
 
 #include <string>
@@ -61,7 +62,7 @@ private:
     AvatarCorner avatar_corner = AvatarCorner::BOTTOM_RIGHT;
     AvatarState current_state = AvatarState::IDLE;
 
-    WinUtils winutils;
+    OsUtils winutils;
     Animation anim;
 
     static constexpr int PADDING = 20;
