@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Animation.hpp"
-#include "AssetManager.hpp"
-#include "Config.hpp"
-#include "MenuBar.hpp"
+#include "../system/AssetManager.hpp"
+#include "../core/Config.hpp"
+#include "../ui/MenuBar.hpp"
 #include "Shake.hpp"
-#include "ShaderEditor.hpp"
-#include "SpriteEditor.hpp"
-#include "OsUtils.hpp"
+#include "../ui/ShaderEditor.hpp"
+#include "../ui/SpriteEditor.hpp"
+#include "../utils/OsUtils.hpp"
 
 #include "raylib.h"
 

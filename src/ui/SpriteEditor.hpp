@@ -1,7 +1,7 @@
 #pragma once
 
-#include "AssetManager.hpp"
-#include "Config.hpp"
+#include "../system/AssetManager.hpp"
+#include "../core/Config.hpp"
 
 class SpriteEditor {
 public:

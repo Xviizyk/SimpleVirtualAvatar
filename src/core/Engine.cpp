@@ -5,9 +5,6 @@
 #endif
 
 bool Engine::init() {
-    // NFD_Init();
-    // NFD_Quit();
-
     ConfigManager::Load();
 
     if (!renderer.init()) {

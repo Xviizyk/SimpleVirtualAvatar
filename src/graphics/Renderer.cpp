@@ -1,6 +1,6 @@
-#include "Renderer.hpp"
+#include "../graphics/Renderer.hpp"
 
-#include "Utils.hpp"
+#include "../utils/Utils.hpp"
 
 #include <algorithm>
 #include <cmath>

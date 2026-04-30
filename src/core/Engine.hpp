@@ -1,15 +1,15 @@
 #pragma once
 
-#include "AssetManager.hpp"
-#include "AudioInput.hpp"
+#include "../system/AssetManager.hpp"
+#include "../system/AudioInput.hpp"
 #include "Config.hpp"
-#include "Input.hpp"
-#include "MenuBar.hpp"
-#include "Renderer.hpp"
-#include "Shake.hpp"
-#include "ShaderEditor.hpp"
-#include "SpriteEditor.hpp"
-#include "Utils.hpp"
+#include "../system/Input.hpp"
+#include "../ui/MenuBar.hpp"
+#include "../graphics/Renderer.hpp"
+#include "../graphics/Shake.hpp"
+#include "../ui/ShaderEditor.hpp"
+#include "../ui/SpriteEditor.hpp"
+#include "../utils/Utils.hpp"
 
 class Engine {
 private:

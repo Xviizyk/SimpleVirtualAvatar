@@ -1,6 +1,6 @@
 #include "SpriteEditor.hpp"
 #include "raylib.h"
-#include "OsUtils.hpp"
+#include "../utils/OsUtils.hpp"
 
 #include <algorithm>
 #include <cctype>

@@ -1,5 +1,5 @@
 #include "Input.hpp"
-#include "OsUtils.hpp"
+#include "../utils/OsUtils.hpp"
 #include "Keys.hpp"
 
 bool Input::is_shift_pressed() {

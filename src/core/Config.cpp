@@ -1,8 +1,8 @@
 #include "Config.hpp"
-#include "OsUtils.hpp"
+#include "../utils/OsUtils.hpp"
 #include <iostream>
 #include <fstream>
-#include <nlohmann/json.hpp>
+#include "../thirdparty/nlohmann/json.hpp"
 
 namespace fs = std::filesystem;
 
