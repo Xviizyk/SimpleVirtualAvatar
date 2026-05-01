@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace {
-    static bool UiButton(const Rectangle& r, const char* text) {
+    static bool ui_button(const Rectangle& r, const char* text) {
         const bool hovered = CheckCollisionPointRec(GetMousePosition(), r);
         DrawRectangleRec(r, hovered ? Color{75, 75, 90, 255} : Color{55, 55, 65, 255});
         DrawRectangleLinesEx(r, 1.0f, Color{120, 120, 130, 255});
@@ -30,18 +30,18 @@ namespace {
     }
 }
 
-void SpriteEditor::Open(AvatarState state) {
+void SpriteEditor::open_window(AvatarState state) {
     open = true;
     editingState = state;
-    SyncFromConfig();
+    sync_from_config();
 }
 
-bool SpriteEditor::IsOpen() const {
+bool SpriteEditor::is_open() const {
     return open;
 }
 
-int& SpriteEditor::FrameCountRef() {
-    auto& cfg = ConfigManager::Get();
+int& SpriteEditor::frame_count_ref() {
+    auto& cfg = ConfigManager::get();
     switch (editingState) {
         case AvatarState::IDLE:     return cfg.maxIdleFrames;
         case AvatarState::TALKING:  return cfg.maxTalkFrames;
@@ -50,7 +50,7 @@ int& SpriteEditor::FrameCountRef() {
     return cfg.maxIdleFrames;
 }
 
-const char* SpriteEditor::StateName() const {
+const char* SpriteEditor::state_name() const {
     switch (editingState) {
         case AvatarState::IDLE:     return "Idle";
         case AvatarState::TALKING:  return "Talk";
@@ -59,7 +59,7 @@ const char* SpriteEditor::StateName() const {
     return "Unknown";
 }
 
-const char* SpriteEditor::Prefix() const {
+const char* SpriteEditor::prefix() const {
     switch (editingState) {
         case AvatarState::IDLE:     return "idle";
         case AvatarState::TALKING:  return "talk";
@@ -68,50 +68,50 @@ const char* SpriteEditor::Prefix() const {
     return "idle";
 }
 
-std::filesystem::path SpriteEditor::FramePath(int index) const {
-    std::string filename = Prefix();
+std::filesystem::path SpriteEditor::frame_path(int index) const {
+    std::string filename = prefix();
     if (editingBlink) {
         filename += "_blink";
     }
     filename += "_" + std::to_string(index) + ".png";
-    return ConfigManager::GetAssetsDir() / filename;
+    return ConfigManager::get_assets_dir() / filename;
 }
 
-void SpriteEditor::SyncFromConfig() {
-    pendingFrames = std::clamp(FrameCountRef(), 1, MAX_FRAMES);
-    FrameCountRef() = pendingFrames;
-    ConfigManager::Save();
+void SpriteEditor::sync_from_config() {
+    pendingFrames = std::clamp(frame_count_ref(), 1, MAX_FRAMES);
+    frame_count_ref() = pendingFrames;
+    ConfigManager::save();
 }
 
-void SpriteEditor::SyncToConfigAndReload(AssetManager& assets) {
+void SpriteEditor::sync_to_config_and_reload(AssetManager& assets) {
     pendingFrames = std::clamp(pendingFrames, 1, MAX_FRAMES);
-    FrameCountRef() = pendingFrames;
+    frame_count_ref() = pendingFrames;
 
-    ConfigManager::Save();
-    assets.reload_avatar_state(editingState, pendingFrames, Prefix());
+    ConfigManager::save();
+    assets.reload_avatar_state(editingState, pendingFrames, prefix());
 }
 
-bool SpriteEditor::OpenFileDialog(std::string& outPath) const {
+bool SpriteEditor::open_file_dialog(std::string& outPath) const {
     return OsUtils::open_file_dialog(GetWindowHandle(), outPath);
 }
 
-bool SpriteEditor::AssignImageToSlot(int index, const std::string& sourcePath, AssetManager& assets) {
+bool SpriteEditor::assign_image_to_slot(int index, const std::string& sourcePath, AssetManager& assets) {
     if (index < 0 || index >= pendingFrames) return false;
 
     Image img = LoadImage(sourcePath.c_str());
     if (img.data == nullptr) return false;
 
-    const auto dst = FramePath(index);
+    const auto dst = frame_path(index);
     const bool ok = ExportImage(img, dst.string().c_str());
     UnloadImage(img);
 
     if (!ok) return false;
 
-    assets.reload_avatar_state(editingState, pendingFrames, Prefix());
+    assets.reload_avatar_state(editingState, pendingFrames, prefix());
     return true;
 }
 
-void SpriteEditor::Draw(AssetManager& assets) {
+void SpriteEditor::draw(AssetManager& assets) {
     if (!open) return;
 
     Vector2 mouse = GetMousePosition();
@@ -143,28 +143,28 @@ void SpriteEditor::Draw(AssetManager& assets) {
     DrawRectangleRec(Rectangle{panelX, panelY, panelW, panelH}, Color{28, 28, 32, 255});
     DrawRectangleLinesEx(Rectangle{panelX, panelY, panelW, panelH}, 1.0f, Color{90, 90, 100, 255});
     
-    DrawText((std::string("Sprite Editor - ") + StateName()).c_str(), 
+    DrawText((std::string("Sprite Editor - ") + state_name()).c_str(), 
               static_cast<int>(panelX + 14.0f), static_cast<int>(panelY + 12.0f), 22, RAYWHITE);
 
-    if (UiButton(Rectangle{panelX + panelW - 34.0f, panelY + 10.0f, 22.0f, 22.0f}, "X")) {
+    if (ui_button(Rectangle{panelX + panelW - 34.0f, panelY + 10.0f, 22.0f, 22.0f}, "X")) {
         open = false;
         return;
     }
 
     DrawText("Frames:", static_cast<int>(panelX + 14.0f), static_cast<int>(panelY + 48.0f), 18, LIGHTGRAY);
 
-    if (UiButton(Rectangle{panelX + 85.0f, panelY + 42.0f, 30.0f, 28.0f}, "-")) {
+    if (ui_button(Rectangle{panelX + 85.0f, panelY + 42.0f, 30.0f, 28.0f}, "-")) {
         pendingFrames = std::max(1, pendingFrames - 1);
-        SyncToConfigAndReload(assets);
+        sync_to_config_and_reload(assets);
     }
-    UiButton(Rectangle{panelX + 120.0f, panelY + 42.0f, 40.0f, 28.0f}, std::to_string(pendingFrames).c_str());
-    if (UiButton(Rectangle{panelX + 165.0f, panelY + 42.0f, 30.0f, 28.0f}, "+")) {
+    ui_button(Rectangle{panelX + 120.0f, panelY + 42.0f, 40.0f, 28.0f}, std::to_string(pendingFrames).c_str());
+    if (ui_button(Rectangle{panelX + 165.0f, panelY + 42.0f, 30.0f, 28.0f}, "+")) {
         pendingFrames = std::min(MAX_FRAMES, pendingFrames + 1);
-        SyncToConfigAndReload(assets);
+        sync_to_config_and_reload(assets);
     }
 
     const char* blinkBtnText = editingBlink ? "MODE: BLINK" : "MODE: NORMAL";
-    if (UiButton(Rectangle{panelX + 210.0f, panelY + 42.0f, 150.0f, 28.0f}, blinkBtnText)) {
+    if (ui_button(Rectangle{panelX + 210.0f, panelY + 42.0f, 150.0f, 28.0f}, blinkBtnText)) {
         editingBlink = !editingBlink;
     }
 
@@ -187,7 +187,7 @@ void SpriteEditor::Draw(AssetManager& assets) {
         };
         slotRects.push_back(r);
 
-        const auto path = FramePath(i);
+        const auto path = frame_path(i);
         const bool exists = std::filesystem::exists(path);
         
         Color bg;
@@ -211,7 +211,7 @@ void SpriteEditor::Draw(AssetManager& assets) {
     for (int i = 0; i < pendingFrames; ++i) {
         if (MousePressedOn(slotRects[i])) {
             std::string file;
-            if (OpenFileDialog(file)) AssignImageToSlot(i, file, assets);
+            if (open_file_dialog(file)) assign_image_to_slot(i, file, assets);
         }
     }
 
@@ -219,7 +219,7 @@ void SpriteEditor::Draw(AssetManager& assets) {
         FilePathList dropped = LoadDroppedFiles();
         for (int i = 0; i < pendingFrames; ++i) {
             if (CheckCollisionPointRec(mouse, slotRects[i])) {
-                if (dropped.count > 0) AssignImageToSlot(i, dropped.paths[0], assets);
+                if (dropped.count > 0) assign_image_to_slot(i, dropped.paths[0], assets);
                 break;
             }
         }

@@ -5,7 +5,7 @@
 #endif
 
 bool Engine::init() {
-    ConfigManager::Load();
+    ConfigManager::load();
 
     if (!renderer.init()) {
         return false;
@@ -16,9 +16,9 @@ bool Engine::init() {
         return false;
     }
 
-    assets.set_base_path(ConfigManager::GetAssetsDir().string());
+    assets.set_base_path(ConfigManager::get_assets_dir().string());
 
-    const auto& cfg = ConfigManager::Get();
+    const auto& cfg = ConfigManager::get();
     assets.load_avatar_state(AvatarState::IDLE, cfg.maxIdleFrames, "idle");
     assets.load_avatar_state(AvatarState::TALKING, cfg.maxTalkFrames, "talk");
     assets.load_avatar_state(AvatarState::SCREAMING, cfg.maxScreamFrames, "scream");
@@ -41,7 +41,7 @@ void Engine::process_input() {
 }
 
 void Engine::update() {
-    const auto& cfg = ConfigManager::Get();
+    const auto& cfg = ConfigManager::get();
 
     renderer.set_max_frames(cfg.maxIdleFrames, cfg.maxTalkFrames, cfg.maxScreamFrames);
 
@@ -61,7 +61,7 @@ void Engine::update() {
 
     if (next_state != current_state) {
         current_state = next_state;
-        shake.Trigger(cfg.shakeStrength, cfg.shakeDuration, cfg.shakeMode);
+        shake.trigger(cfg.shakeStrength, cfg.shakeDuration, cfg.shakeMode);
     }
 
     renderer.set_avatar_state(current_state);

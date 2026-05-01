@@ -20,18 +20,18 @@ struct Config {
 
 class ConfigManager {
 public:
-    static Config& Get();
+    static Config& get();
 
-    static void Load();
-    static void Save();
+    static void load();
+    static void save();
 
-    static std::filesystem::path GetAppDataRoot();
-    static std::filesystem::path GetAppDir();
-    static std::filesystem::path GetAssetsDir();
-    static std::filesystem::path GetShaderDir();
-    static std::filesystem::path GetConfigPath();
+    static std::filesystem::path get_appdata_path();
+    static std::filesystem::path get_app_dir();
+    static std::filesystem::path get_assets_dir();
+    static std::filesystem::path get_shader_dir();
+    static std::filesystem::path get_config_path();
 
-    static void EnsureFolders();
+    static void ensure_folders();
 
 private:
     static Config config;

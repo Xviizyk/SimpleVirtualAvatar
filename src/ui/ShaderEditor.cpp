@@ -5,7 +5,7 @@
 #include <array>
 
 namespace {
-    static bool UiButton(const Rectangle& r, const char* text, bool selected = false) {
+    static bool ui_button(const Rectangle& r, const char* text, bool selected = false) {
         const bool hovered = CheckCollisionPointRec(GetMousePosition(), r);
         Color fill = selected ? Color{80, 90, 120, 255} : (hovered ? Color{75, 75, 90, 255} : Color{55, 55, 65, 255});
         DrawRectangleRec(r, fill);
@@ -18,13 +18,13 @@ namespace {
         return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
     }
 
-    static bool UiMinusPlus(const Rectangle& minusRect, const Rectangle& plusRect, float& value, float step, float minV, float maxV) {
+    static bool ui_minus_plus(const Rectangle& minusRect, const Rectangle& plusRect, float& value, float step, float minV, float maxV) {
         bool changed = false;
-        if (UiButton(minusRect, "-")) {
+        if (ui_button(minusRect, "-")) {
             value = std::max(minV, value - step);
             changed = true;
         }
-        if (UiButton(plusRect, "+")) {
+        if (ui_button(plusRect, "+")) {
             value = std::min(maxV, value + step);
             changed = true;
         }
@@ -35,31 +35,31 @@ namespace {
 ShaderEditor::ShaderEditor() = default;
 
 ShaderEditor::~ShaderEditor() {
-    Unload();
+    unload();
 }
 
-void ShaderEditor::Open() {
+void ShaderEditor::open_window() {
     open = true;
     needsCompile = true;
 }
 
-bool ShaderEditor::IsOpen() const {
+bool ShaderEditor::is_open() const {
     return open;
 }
 
-bool ShaderEditor::HasShader() const {
+bool ShaderEditor::has_shader() const {
     return shaderReady && shader.id > 0;
 }
 
-bool ShaderEditor::IsEnabled() const {
-    return enabled && HasShader();
+bool ShaderEditor::is_enabled() const {
+    return enabled && has_shader();
 }
 
-const Shader& ShaderEditor::GetShader() const {
+const Shader& ShaderEditor::get_shader() const {
     return shader;
 }
 
-void ShaderEditor::Unload() {
+void ShaderEditor::unload() {
     if (shaderReady && shader.id > 0) {
         UnloadShader(shader);
     }
@@ -70,7 +70,7 @@ void ShaderEditor::Unload() {
     locSpeed = -1;
 }
 
-const char* ShaderEditor::VertexSource() {
+const char* ShaderEditor::vertex_source() {
     return R"(#version 330
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
@@ -90,7 +90,7 @@ void main()
 )";
 }
 
-const char* ShaderEditor::PresetName() const {
+const char* ShaderEditor::preset_name() const {
     switch (presetIndex) {
         case 0: return "Wave";
         case 1: return "RGB Shift";
@@ -100,7 +100,7 @@ const char* ShaderEditor::PresetName() const {
     return "Wave";
 }
 
-std::string ShaderEditor::BuildFragmentSource() const {
+std::string ShaderEditor::build_fragment_source() const {
     switch (presetIndex) {
         case 1:
             return R"(#version 330
@@ -190,13 +190,13 @@ void main()
     }
 }
 
-bool ShaderEditor::Compile() {
-    Shader candidate = LoadShaderFromMemory(VertexSource(), BuildFragmentSource().c_str());
+bool ShaderEditor::compile() {
+    Shader candidate = LoadShaderFromMemory(vertex_source(), build_fragment_source().c_str());
     if (candidate.id == 0) {
         return false;
     }
 
-    Unload();
+    unload();
 
     shader = candidate;
     shaderReady = true;
@@ -207,8 +207,8 @@ bool ShaderEditor::Compile() {
     return true;
 }
 
-void ShaderEditor::ApplyUniforms(float time) {
-    if (!IsEnabled()) {
+void ShaderEditor::apply_uniforms(float time) {
+    if (!is_enabled()) {
         return;
     }
 
@@ -223,7 +223,7 @@ void ShaderEditor::ApplyUniforms(float time) {
     }
 }
 
-void ShaderEditor::Draw() {
+void ShaderEditor::draw() {
     if (!open) {
         return;
     }
@@ -253,46 +253,46 @@ void ShaderEditor::Draw() {
     DrawRectangleRec(headerRect, isDragging ? Color{60, 60, 70, 255} : Color{45, 45, 50, 255});
     DrawText("Shader Editor", static_cast<int>(x + 14.0f), static_cast<int>(y + 6.0f), 22, RAYWHITE);
 
-    if (UiButton(Rectangle{x + w - 34.0f, y + 4.0f, 22.0f, 22.0f}, "X")) {
+    if (ui_button(Rectangle{x + w - 34.0f, y + 4.0f, 22.0f, 22.0f}, "X")) {
         open = false;
         return;
     }
 
-    if (UiButton(Rectangle{x + 14.0f, y + 46.0f, 90.0f, 28.0f}, "Enabled", enabled)) {
+    if (ui_button(Rectangle{x + 14.0f, y + 46.0f, 90.0f, 28.0f}, "Enabled", enabled)) {
         enabled = !enabled;
     }
 
-    DrawText(("Preset: " + std::string(PresetName())).c_str(), static_cast<int>(x + 120.0f), static_cast<int>(y + 50.0f), 18, LIGHTGRAY);
+    DrawText(("Preset: " + std::string(preset_name())).c_str(), static_cast<int>(x + 120.0f), static_cast<int>(y + 50.0f), 18, LIGHTGRAY);
 
     const std::array<const char*, 4> presetButtons = {"Wave", "RGB", "Scan", "CRT"};
     for (int i = 0; i < 4; ++i) {
         const float bx = x + 14.0f + i * 104.0f;
-        if (UiButton(Rectangle{bx, y + 82.0f, 96.0f, 28.0f}, presetButtons[i], presetIndex == i)) {
+        if (ui_button(Rectangle{bx, y + 82.0f, 96.0f, 28.0f}, presetButtons[i], presetIndex == i)) {
             presetIndex = i;
             needsCompile = true;
         }
     }
 
     DrawText("Intensity", static_cast<int>(x + 14.0f), static_cast<int>(y + 132.0f), 18, RAYWHITE);
-    if (UiMinusPlus(Rectangle{x + 120.0f, y + 128.0f, 28.0f, 24.0f},
+    if (ui_minus_plus(Rectangle{x + 120.0f, y + 128.0f, 28.0f, 24.0f},
                     Rectangle{x + 152.0f, y + 128.0f, 28.0f, 24.0f},
                     intensity, 0.1f, 0.0f, 2.5f)) {
     }
     DrawText(TextFormat("%.2f", intensity), static_cast<int>(x + 190.0f), static_cast<int>(y + 130.0f), 18, LIGHTGRAY);
 
     DrawText("Speed", static_cast<int>(x + 14.0f), static_cast<int>(y + 170.0f), 18, RAYWHITE);
-    if (UiMinusPlus(Rectangle{x + 120.0f, y + 166.0f, 28.0f, 24.0f},
+    if (ui_minus_plus(Rectangle{x + 120.0f, y + 166.0f, 28.0f, 24.0f},
                     Rectangle{x + 152.0f, y + 166.0f, 28.0f, 24.0f},
                     speed, 0.1f, 0.1f, 6.0f)) {
     }
     DrawText(TextFormat("%.2f", speed), static_cast<int>(x + 190.0f), static_cast<int>(y + 168.0f), 18, LIGHTGRAY);
 
-    if (UiButton(Rectangle{x + 290.0f, y + 160.0f, 130.0f, 34.0f}, "Compile / Apply")) {
+    if (ui_button(Rectangle{x + 290.0f, y + 160.0f, 130.0f, 34.0f}, "Compile / Apply")) {
         needsCompile = true;
     }
 
     if (needsCompile) {
-        Compile();
+        compile();
         needsCompile = false;
     }
 

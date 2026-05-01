@@ -21,7 +21,7 @@ namespace {
     }
 }
 
-MenuBarAction MenuBar::Draw() {
+MenuBarAction MenuBar::draw() {
     MenuBarAction action{};
 
     const int sw = GetScreenWidth();

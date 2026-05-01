@@ -5,10 +5,10 @@
 
 class SpriteEditor {
 public:
-    void Open(AvatarState state);
-    bool IsOpen() const;
+    void open_window(AvatarState state);
+    bool is_open() const;
 
-    void Draw(AssetManager& assets);
+    void draw(AssetManager& assets);
 
 private:
     Rectangle windowRect = { 100, 100, 600, 400 };
@@ -25,14 +25,14 @@ private:
     static constexpr int MAX_FRAMES = 32;
     static constexpr int COLUMNS = 4;
 
-    int& FrameCountRef();
-    const char* StateName() const;
-    const char* Prefix() const;
-    std::filesystem::path FramePath(int index) const;
+    int& frame_count_ref();
+    const char* state_name() const;
+    const char* prefix() const;
+    std::filesystem::path frame_path(int index) const;
 
-    void SyncFromConfig();
-    void SyncToConfigAndReload(AssetManager& assets);
-    bool AssignImageToSlot(int index, const std::string& sourcePath, AssetManager& assets);
+    void sync_from_config();
+    void sync_to_config_and_reload(AssetManager& assets);
+    bool assign_image_to_slot(int index, const std::string& sourcePath, AssetManager& assets);
 
-    bool OpenFileDialog(std::string& outPath) const;
+    bool open_file_dialog(std::string& outPath) const;
 };

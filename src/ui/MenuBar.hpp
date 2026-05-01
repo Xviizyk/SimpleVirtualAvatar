@@ -12,5 +12,5 @@ struct MenuBarAction {
 
 class MenuBar {
 public:
-    MenuBarAction Draw();
+    MenuBarAction draw();
 };

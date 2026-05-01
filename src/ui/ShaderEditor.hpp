@@ -8,15 +8,15 @@ public:
     ShaderEditor();
     ~ShaderEditor();
 
-    void Open();
-    bool IsOpen() const;
+    void open_window();
+    bool is_open() const;
 
-    void Draw();
+    void draw();
 
-    bool HasShader() const;
-    bool IsEnabled() const;
-    const Shader& GetShader() const;
-    void ApplyUniforms(float time);
+    bool has_shader() const;
+    bool is_enabled() const;
+    const Shader& get_shader() const;
+    void apply_uniforms(float time);
 
 private:
     Rectangle windowRect = { 100, 100, 600, 400 };
@@ -46,9 +46,9 @@ private:
     int locIntensity = -1;
     int locSpeed = -1;
 
-    void Unload();
-    bool Compile();
-    std::string BuildFragmentSource() const;
-    static const char* VertexSource();
-    const char* PresetName() const;
+    void unload();
+    bool compile();
+    std::string build_fragment_source() const;
+    static const char* vertex_source();
+    const char* preset_name() const;
 };

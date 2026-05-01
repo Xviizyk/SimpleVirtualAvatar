@@ -8,40 +8,40 @@ namespace fs = std::filesystem;
 
 Config ConfigManager::config;
 
-fs::path ConfigManager::GetAppDataRoot() {
+fs::path ConfigManager::get_appdata_path() {
     return fs::path(OsUtils::get_appdata_path());
 }
 
-fs::path ConfigManager::GetAppDir() {
-    fs::path path = GetAppDataRoot() / "SimpleVirtualAvatar";
+fs::path ConfigManager::get_app_dir() {
+    fs::path path = get_appdata_path() / "SimpleVirtualAvatar";
     return path;
 }
 
-fs::path ConfigManager::GetConfigPath() {
-    return GetAppDir() / "config.json";
+fs::path ConfigManager::get_config_path() {
+    return get_app_dir() / "config.json";
 }
 
-fs::path ConfigManager::GetAssetsDir() {
-    return GetAppDir() / "assets";
+fs::path ConfigManager::get_assets_dir() {
+    return get_app_dir() / "assets";
 }
 
-fs::path ConfigManager::GetShaderDir() {
-    return GetAppDir() / "shaders";
+fs::path ConfigManager::get_shader_dir() {
+    return get_app_dir() / "shaders";
 }
 
-void ConfigManager::EnsureFolders() {
-    fs::create_directories(GetAssetsDir());
-    fs::create_directories(GetShaderDir());
+void ConfigManager::ensure_folders() {
+    fs::create_directories(get_assets_dir());
+    fs::create_directories(get_shader_dir());
 }
 
-Config& ConfigManager::Get() {
+Config& ConfigManager::get() {
     return config;
 }
 
-void ConfigManager::Load() {
-    EnsureFolders();
+void ConfigManager::load() {
+    ensure_folders();
     
-    std::ifstream file(GetConfigPath());
+    std::ifstream file(get_config_path());
     if (!file.is_open()) return;
 
     try {
@@ -63,7 +63,7 @@ void ConfigManager::Load() {
     }
 }
 
-void ConfigManager::Save() {
+void ConfigManager::save() {
     nlohmann::json j;
 
     j["max_idle_frames"]   = config.maxIdleFrames;
@@ -77,7 +77,7 @@ void ConfigManager::Save() {
     if (config.shakeMode == Config::ShakeMode::Y) mode = "y";
     j["shake_mode"] = mode;
 
-    std::ofstream file(GetConfigPath());
+    std::ofstream file(get_config_path());
     if (file.is_open()) {
         file << j.dump(4);
     }

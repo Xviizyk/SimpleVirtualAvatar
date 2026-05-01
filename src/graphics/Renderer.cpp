@@ -101,9 +101,9 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect,
         current_blink_state
     );
 
-    if (shaderEditor.IsEnabled()) {
-        shaderEditor.ApplyUniforms(static_cast<float>(GetTime()));
-        BeginShaderMode(shaderEditor.GetShader());
+    if (shaderEditor.is_enabled()) {
+        shaderEditor.apply_uniforms(static_cast<float>(GetTime()));
+        BeginShaderMode(shaderEditor.get_shader());
     }
 
     if (avatar_texture.id > 0) {
@@ -125,7 +125,7 @@ void Renderer::render_avatar(AssetManager& assets, const Rectangle& avatar_rect,
         DrawText(msg, static_cast<int>(rect.x + (rect.width - tw) / 2.0f), static_cast<int>(rect.y + rect.height / 2.0f), fs, TEXT_COLOR);
     }
 
-    if (shaderEditor.IsEnabled()) {
+    if (shaderEditor.is_enabled()) {
         EndShaderMode();
     }
 }
@@ -318,11 +318,11 @@ void Renderer::update(AssetManager& assets, float volume, MenuBar& menuBar, Spri
 
     update_dpi_scale(delta_time);
     update_animation(delta_time);
-    shake.Update(delta_time);
+    shake.update(delta_time);
 
     Rectangle avatar_rect = calculate_avatar_rect(400);
 
-    if (!spriteEditor.IsOpen() && !shaderEditor.IsOpen() && !show_shake_settings) {
+    if (!spriteEditor.is_open() && !show_shake_settings) {
         handle_mouse_drag(avatar_rect);
     }
     BeginDrawing();
@@ -334,27 +334,27 @@ void Renderer::update(AssetManager& assets, float volume, MenuBar& menuBar, Spri
     }
 
     bool current_blink_state = anim.is_blink();
-    Vector2 shakeOffset = shake.GetOffset();
+    Vector2 shakeOffset = shake.get_offset();
     render_avatar(assets, avatar_rect, current_blink_state, shaderEditor, shakeOffset);
 
     if (is_ui_visible) {
         render_ui(volume);
         
-        MenuBarAction action = menuBar.Draw();
+        MenuBarAction action = menuBar.draw();
 
-        if (action.openIdleEditor)   spriteEditor.Open(AvatarState::IDLE);
-        if (action.openTalkEditor)   spriteEditor.Open(AvatarState::TALKING);
-        if (action.openScreamEditor) spriteEditor.Open(AvatarState::SCREAMING);
-        if (action.openShaderEditor) shaderEditor.Open();
+        if (action.openIdleEditor)   spriteEditor.open_window(AvatarState::IDLE);
+        if (action.openTalkEditor)   spriteEditor.open_window(AvatarState::TALKING);
+        if (action.openScreamEditor) spriteEditor.open_window(AvatarState::SCREAMING);
+        if (action.openShaderEditor) shaderEditor.open_window();
         if (action.openShakeSettings) show_shake_settings = !show_shake_settings;
 
         
-        if (spriteEditor.IsOpen()) {
-            spriteEditor.Draw(assets);
+        if (spriteEditor.is_open()) {
+            spriteEditor.draw(assets);
         }
         
-        if (shaderEditor.IsOpen()) {
-            shaderEditor.Draw();
+        if (shaderEditor.is_open()) {
+            shaderEditor.draw();
         }
         
         if (show_shake_settings) {
@@ -398,7 +398,7 @@ void Renderer::draw_shake_settings() {
         return;
     }
 
-    Config& cfg = ConfigManager::Get();
+    Config& cfg = ConfigManager::get();
     Vector2 mouse = GetMousePosition();
 
     float x = windowRect.x;
@@ -439,22 +439,22 @@ void Renderer::draw_shake_settings() {
     DrawText("Strength", static_cast<int>(x + 14.0f), static_cast<int>(y + 52.0f), 18, RAYWHITE);
     if (render_button(Rectangle{x + 120.0f, y + 48.0f, 28.0f, 24.0f}, "-", 1.0f)) {
         cfg.shakeStrength = std::max(0.0f, cfg.shakeStrength - 0.5f);
-        ConfigManager::Save();
+        ConfigManager::save();
     }
     if (render_button(Rectangle{x + 152.0f, y + 48.0f, 28.0f, 24.0f}, "+", 1.0f)) {
         cfg.shakeStrength += 0.5f;
-        ConfigManager::Save();
+        ConfigManager::save();
     }
     DrawText(TextFormat("%.2f", cfg.shakeStrength), static_cast<int>(x + 190.0f), static_cast<int>(y + 50.0f), 18, LIGHTGRAY);
 
     DrawText("Duration", static_cast<int>(x + 14.0f), static_cast<int>(y + 88.0f), 18, RAYWHITE);
     if (render_button(Rectangle{x + 120.0f, y + 84.0f, 28.0f, 24.0f}, "-", 1.0f)) {
         cfg.shakeDuration = std::max(0.0f, cfg.shakeDuration - 0.05f);
-        ConfigManager::Save();
+        ConfigManager::save();
     }
     if (render_button(Rectangle{x + 152.0f, y + 84.0f, 28.0f, 24.0f}, "+", 1.0f)) {
         cfg.shakeDuration += 0.05f;
-        ConfigManager::Save();
+        ConfigManager::save();
     }
     DrawText(TextFormat("%.2f", cfg.shakeDuration), static_cast<int>(x + 190.0f), static_cast<int>(y + 86.0f), 18, LIGHTGRAY);
 
@@ -466,15 +466,15 @@ void Renderer::draw_shake_settings() {
 
     if (render_button(Rectangle{x + 120.0f, y + 120.0f, 40.0f, 24.0f}, "X", xSel)) {
         cfg.shakeMode = Config::ShakeMode::X;
-        ConfigManager::Save();
+        ConfigManager::save();
     }
     if (render_button(Rectangle{x + 166.0f, y + 120.0f, 40.0f, 24.0f}, "Y", ySel)) {
         cfg.shakeMode = Config::ShakeMode::Y;
-        ConfigManager::Save();
+        ConfigManager::save();
     }
     if (render_button(Rectangle{x + 212.0f, y + 120.0f, 60.0f, 24.0f}, "X+Y", xySel)) {
         cfg.shakeMode = Config::ShakeMode::XY;
-        ConfigManager::Save();
+        ConfigManager::save();
     }
 
     DrawText("Triggered on state change.", static_cast<int>(x + 14.0f), static_cast<int>(y + 168.0f), 15, Color{170, 170, 180, 255});
