@@ -1,14 +1,48 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.31)
 
 if(POLICY CMP0169)
     cmake_policy(SET CMP0169 OLD)
 endif()
 
 # ──────────────────────────────────────────────────────────────────────────────
+#  SimpleVirtualAvatar output logo
+# ──────────────────────────────────────────────────────────────────────────────
+set(_lines
+"██████╗██╗███╗   ███╗ ██████╗ ██╗     ███████╗"
+"██╔════╝██║████╗ ████║██╔══██╗██║     ██╔════╝"
+"╚█████╗ ██║██╔████╔██║██████╔╝██║     █████╗  "
+" ╚═══██╗██║██║╚██╔╝██║██╔═══╝ ██║     ██╔══╝  "
+"██████╔╝██║██║ ╚═╝ ██║██║     ███████╗███████╗"
+"╚═════╝ ╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚══════╝"
+""
+"██╗   ██╗██╗██████╗ ████████╗██╗   ██╗ █████╗ ██╗     "
+"██║   ██║██║██╔══██╗╚══██╔══╝██║   ██║██╔══██╗██║     "
+"██║   ██║██║██████╔╝   ██║   ██║   ██║███████║██║     "
+"╚██╗ ██╔╝██║██╔══██╗   ██║   ╚██╗ ██╔╝██╔══██║██║     "
+" ╚████╔╝ ██║██║  ██║   ██║    ╚████╔╝ ██║  ██║███████╗"
+"  ╚═══╝  ╚═╝╚═╝  ╚═╝   ╚═╝     ╚═══╝  ╚═╝  ╚═╝╚══════╝"
+""
+" █████╗ ██╗   ██╗ █████╗ ████████╗ █████╗ ██████╗ "
+"██╔══██╗██║   ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗"
+"███████║██║   ██║███████║   ██║   ███████║██████╔╝"
+"██╔══██║╚██╗ ██╔╝██╔══██║   ██║   ██╔══██║██╔══██╗"
+"██║  ██║ ╚████╔╝ ██║  ██║   ██║   ██║  ██║██║  ██║"
+"╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝"
+)
+
+message(STATUS "")
+
+foreach(L IN LISTS _lines)
+    message(STATUS "${L}")
+endforeach()
+
+message(STATUS "")
+
+# ──────────────────────────────────────────────────────────────────────────────
 #  Project declaration
 # ──────────────────────────────────────────────────────────────────────────────
 project(SimpleVirtualAvatar
-    VERSION     2.1.0
+    VERSION     2.2.0
     LANGUAGES   C CXX
     DESCRIPTION "A simple virtual avatar rendering engine"
 )
@@ -46,8 +80,8 @@ endif()
 #  User options
 # ──────────────────────────────────────────────────────────────────────────────
 if(LINUX)
-option(ENABLE_X11            "Enable X11 display backend (Linux)" ON)
-option(CROSS_COMPILE_ARM64   "Cross-compile for ARM64 target"     OFF)
+    option(ENABLE_X11            "Enable X11 display backend (Linux)" ON)
+    option(CROSS_COMPILE_ARM64   "Cross-compile for ARM64 target"     OFF)
 endif()
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -62,6 +96,50 @@ CPMAddPackage("gh:btzy/nativefiledialog-extended@1.3.0")
 CPMAddPackage("gh:raysan5/raylib#6.0")
 CPMAddPackage("gh:mackron/miniaudio#0.11.25")
 
+set(OSUTILS_SOURCES
+    src/utils/OsUtils.cpp
+    src/utils/OsUtils.hpp
+)
+
+if(WIN32)
+    list(APPEND OSUTILS_SOURCES
+        src/utils/windows/OsUtils_win.cpp
+        src/utils/windows/OsUtils_win.hpp
+    )
+elseif(APPLE)
+    list(APPEND OSUTILS_SOURCES
+        src/utils/macOS/OsUtils_mac.cpp
+        src/utils/macOS/OsUtils_mac.hpp
+    )
+elseif(UNIX)
+    list(APPEND OSUTILS_SOURCES
+        src/utils/linux/OsUtils_lin.cpp
+        src/utils/linux/OsUtils_lin.hpp
+    )
+endif()
+
+add_library(OsUtils STATIC ${OSUTILS_SOURCES})
+
+target_include_directories(OsUtils PUBLIC
+    src/OsUtils
+)
+
+target_link_libraries(OsUtils PUBLIC raylib nfd)
+
+if(WIN32)
+    target_link_libraries(OsUtils PUBLIC dwmapi shell32)
+
+elseif(APPLE)
+    target_link_libraries(OsUtils PUBLIC
+        "-framework Cocoa"
+        "-framework AppKit"
+    )
+
+elseif(UNIX AND ENABLE_X11)
+    find_package(X11 REQUIRED COMPONENTS Xext)
+    target_link_libraries(OsUtils PUBLIC X11::X11 X11::Xext)
+endif()
+
 # ──────────────────────────────────────────────────────────────────────────────
 #  Main executable
 # ──────────────────────────────────────────────────────────────────────────────
@@ -71,7 +149,17 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
     "src/*.h"
 )
 
-if(NOT PROJECT_SOURCES)
+list(REMOVE_ITEM PROJECT_SOURCES ${OSUTILS_SOURCES})
+
+if(WIN32)
+    list(FILTER PROJECT_SOURCES EXCLUDE REGEX "src/utils/(linux|macOS)/.*")
+elseif(APPLE)
+    list(FILTER PROJECT_SOURCES EXCLUDE REGEX "src/utils/(linux|windows)/.*")
+elseif(UNIX)
+    list(FILTER PROJECT_SOURCES EXCLUDE REGEX "src/utils/(windows|macOS)/.*")
+endif()
+
+if(NOT PROJECT_SOURCES  )
     message(FATAL_ERROR "No source files found under src/. Nothing to build.")
 endif()
 
@@ -120,7 +208,7 @@ else()
         -Woverloaded-virtual
         -Wmisleading-indentation
     )
-endif() 
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
 
@@ -163,10 +251,11 @@ if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         opengl32 ole32 uuid
     )
-    # target_link_libraries(${PROJECT_NAME} PRIVATE
-    #     winmm gdi32 opengl32 shell32 ole32 uuid
-    # )
-    if(NOT MSVC)
+    if(MSVC)
+        target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<NOT:$<CONFIG:Debug>>:/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup>
+        )
+    else()
         target_link_options(${PROJECT_NAME} PRIVATE
             -static
             $<$<NOT:$<CONFIG:Debug>>:-mwindows>
@@ -200,7 +289,11 @@ endif()
 # ──────────────────────────────────────────────────────────────────────────────
 #  Core library linkage
 # ──────────────────────────────────────────────────────────────────────────────
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib nfd)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    raylib
+    nfd
+    OsUtils
+)
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Install rules
@@ -225,14 +318,17 @@ message(STATUS "")
 message(STATUS "╔══════════════════════════════════════╗")
 message(STATUS "║   ${PROJECT_NAME} — Build Summary")
 message(STATUS "╠══════════════════════════════════════╣")
-summary_row("Version"     "${PROJECT_VERSION}")
-summary_row("Build type"  "${CMAKE_BUILD_TYPE}")
-summary_row("Compiler"    "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-summary_row("System"      "${CMAKE_SYSTEM_NAME} / ${CMAKE_SYSTEM_PROCESSOR}")
+summary_row("Version"      "${PROJECT_VERSION}")
+summary_row("Build type"   "${CMAKE_BUILD_TYPE}")
+summary_row("Compiler"     "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+summary_row("System"       "${CMAKE_SYSTEM_NAME} / ${CMAKE_SYSTEM_PROCESSOR}")
 summary_row("C++ standard" "C++${CMAKE_CXX_STANDARD}")
-message(STATUS "║")
-summary_row("Tracy"       "${ENABLE_TRACY}")
-summary_row("X11"         "${ENABLE_X11}")
-summary_row("ARM64 xcomp" "${CROSS_COMPILE_ARM64}")
+if(ENABLE_X11)
+    message(STATUS "║")
+    summary_row("X11"          "${ENABLE_X11}")
+    if(CROSS_COMPILE_ARM64)
+        summary_row("ARM64 xcomp"  "${CROSS_COMPILE_ARM64}")
+    endif()
+endif()
 message(STATUS "╚══════════════════════════════════════╝")
 message(STATUS "")

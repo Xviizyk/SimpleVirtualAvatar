@@ -1,92 +1,36 @@
 #include "OsUtils.hpp"
-#include <raylib.h>
-#include <nfd.h>
-#include <cstdlib>
-#include <filesystem>
-#include <iostream>
 
-static std::string get_env_var(const char* key) {
-    const char* val = std::getenv(key);
-    return val ? std::string(val) : "";
-}
-
-float OsUtils::get_dpi_scale(void*) {
-    Vector2 scale = GetWindowScaleDPI();
-    return scale.x;
-}
-
-void OsUtils::set_window_always_on_top(void*) {
-    SetWindowState(FLAG_WINDOW_TOPMOST);
-}
-
-void OsUtils::force_show(void*) {
-    ClearWindowState(FLAG_WINDOW_MINIMIZED | FLAG_WINDOW_HIDDEN);
-    SetWindowState(FLAG_WINDOW_TOPMOST);
-}
-
-void OsUtils::set_overlay_mode(void*, bool overlay) {
-    if (overlay) {
-        SetWindowState(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
-    } else {
-        ClearWindowState(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED);
-    }
-}
-
-void OsUtils::set_window_borderless(void*, bool borderless) {
-    if (borderless) {
-        SetWindowState(FLAG_WINDOW_UNDECORATED);
-    } else {
-        ClearWindowState(FLAG_WINDOW_UNDECORATED);
-    }
-}
-
-void OsUtils::make_window_ghost(void*) {
-    SetWindowState(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST | FLAG_WINDOW_MOUSE_PASSTHROUGH);
-}
-
-bool OsUtils::is_key_down_global(int raylibKey) {
-    return IsKeyDown(raylibKey);
-}
-
-bool OsUtils::is_shift_pressed_global() {
-    return IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
-}
-
-bool OsUtils::open_file_dialog(void*, std::string& outPath) {
-    nfdchar_t* outPathC = nullptr;
-    nfdfilteritem_t filters[] = { { "Image Files", "png,jpg,jpeg,bmp,tga" } };
-    
-    nfdresult_t result = NFD_OpenDialog(&outPathC, filters, 1, nullptr);
-    
-    if (result == NFD_OKAY) {
-        outPath = outPathC;
-        NFD_FreePath(outPathC);
-        return true;
-    }
-    
-    if (result == NFD_ERROR) {
-        std::cerr << "NFD Error: " << NFD_GetError() << std::endl;
-    }
-    
-    return false;
-}
-
-std::string OsUtils::get_appdata_path() {
-    std::string path;
-    
 #if defined(_WIN32)
-    path = get_env_var("APPDATA");
+  #include "windows/OsUtils_win.hpp"
+  namespace Impl = OsUtilsWin;
+
 #elif defined(__APPLE__)
-    path = get_env_var("HOME") + "/Library/Application Support";
+  #include "macos/OsUtils_mac.hpp"
+  namespace Impl = OsUtilsMac;
+
+#elif defined(__linux__)
+  #include "linux/OsUtils_lin.hpp"
+  namespace Impl = OsUtilsLin;
+
 #else
-    path = get_env_var("XDG_CONFIG_HOME");
-    if (path.empty()) {
-        path = get_env_var("HOME") + "/.config";
-    }
+  #error "Unsupported platform"
 #endif
-    if (path.empty() || path == "/Library/Application Support" || path == "/.config") {
-        return ".";
-    }
-    
-    return path;
-}
+
+float OsUtils::get_dpi_scale(void* h) { return Impl::get_dpi_scale(h); }
+
+void OsUtils::set_show_in_taskbar(void* h, bool show) { Impl::set_show_in_taskbar(h, show); }
+void OsUtils::setup_overlay(void* h) { Impl::setup_overlay(h); }
+void OsUtils::keep_focus(void* h) { Impl::keep_focus(h); }
+void OsUtils::set_window_opacity(void* h, float a) { Impl::set_window_opacity(h, a); }
+void OsUtils::set_click_through(void* h, bool e) { Impl::set_click_through(h, e); }
+void OsUtils::set_window_always_on_top(void* h) { Impl::set_window_always_on_top(h); }
+void OsUtils::force_show(void* h) { Impl::force_show(h); }
+void OsUtils::set_overlay_mode(void* h, bool o) { Impl::set_overlay_mode(h, o); }
+void OsUtils::set_window_borderless(void* h, bool b) { Impl::set_window_borderless(h, b); }
+void OsUtils::make_window_ghost(void* h) { Impl::make_window_ghost(h); }
+
+bool OsUtils::is_key_down_global(int k) { return Impl::is_key_down_global(k); }
+bool OsUtils::is_shift_pressed_global() { return Impl::is_shift_pressed_global(); }
+bool OsUtils::open_file_dialog(void* h, std::string& p) { return Impl::open_file_dialog(h, p); }
+
+std::string OsUtils::get_appdata_path() { return Impl::get_appdata_path(); }

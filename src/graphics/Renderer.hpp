@@ -70,16 +70,69 @@ private:
     static constexpr int VOLUME_BAR_WIDTH = 200;
     static constexpr int VOLUME_BAR_HEIGHT = 20;
 
-    static constexpr Color TEXT_COLOR = {200, 200, 200, 255};
-    static constexpr Color BAR_BG_COLOR = {60, 60, 60, 255};
-    static constexpr Color BAR_FG_COLOR = {100, 200, 100, 255};
-    static constexpr Color BACKGROUND_COLOR = {0, 0, 0, 0};
-    static constexpr Color UI_TIPS_COLOR = {150, 150, 150, 200};
+    static constexpr float SIDEBAR_W = 220.0f;
+    static constexpr float MENUBAR_H = 32.0f;
+    static constexpr float SECTION_PAD = 14.0f;
+    static constexpr float LABEL_FS = 10.0f;
+    static constexpr float BODY_FS = 12.0f;
+    static constexpr float BTN_SIZE = 22.0f;
+    static constexpr float DIVIDER_H = 1.0f;
+    static constexpr float BAR_H = 4.0f;
+    static constexpr float BADGE_H = 22.0f;
+    static constexpr float BADGE_RADIUS = 4.0f;
+
+    static constexpr Color BG_MAIN = { 18, 18, 20, 255 };
+    static constexpr Color BG_SIDEBAR = { 22, 22, 26, 255 };
+    static constexpr Color BG_MENUBAR = { 28, 28, 34, 255 };
+
+    static constexpr Color BORDER_COLOR = { 48, 48, 58, 255 };
+    static constexpr Color DIVIDER_COLOR = { 38, 38, 46, 255 };
+
+    static constexpr Color TEXT_COLOR = { 200, 200, 200, 255 };
+    static constexpr Color LABEL_COLOR = { 90, 90, 110, 255 };
+    static constexpr Color TEXT_DIM = { 100, 100, 120, 255 };
+    static constexpr Color TEXT_MID = { 160, 160, 180, 255 };
+    static constexpr Color TEXT_BRIGHT = { 220, 220, 235, 255 };
+    static constexpr Color TIP_COLOR = { 70, 70, 88, 255 };
+    static constexpr Color FPS_COLOR = { 80, 80, 98, 255 };
+
+    static constexpr Color BAR_BG_COLOR = { 38, 38, 48, 255 };
+    static constexpr Color BAR_FG_COLOR = { 80, 180, 120, 255 };
+    static constexpr Color BAR_TRACK = { 38, 38, 50, 255 };
+    static constexpr Color BAR_IDLE = { 80, 160, 110, 255 };
+    static constexpr Color BAR_TALK = { 60, 130, 220, 255 };
+    static constexpr Color BAR_SCREAM = { 200, 70, 70, 255 };
+
+    static constexpr Color BACKGROUND_COLOR = { 18, 18, 20, 255 };
+    static constexpr Color UI_TIPS_COLOR = { 70, 70, 88, 255 };
+
+    static constexpr Color BTN_NORMAL = { 38, 38, 50, 255 };
+    static constexpr Color BTN_HOVER = { 52, 52, 68, 255 };
+    static constexpr Color BTN_PRESSED = { 68, 68, 88, 255 };
+    static constexpr Color BTN_BORDER = { 55, 55, 72, 255 };
+
+    static constexpr Color BADGE_BG = { 32, 32, 42, 255 };
+    static constexpr Color BADGE_BORDER = { 50, 50, 65, 255 };
+
+    static constexpr Color BADGE_ACTIVE_BG = { 28, 52, 90, 255 };
+    static constexpr Color BADGE_ACTIVE_BORDER = { 50, 95, 165, 255 };
+    static constexpr Color BADGE_ACTIVE_TEXT = { 100, 170, 255, 255 };
+
+    static constexpr Color BADGE_SCREAM_BG = { 80, 28, 28, 255 };
+    static constexpr Color BADGE_SCREAM_BORDER = { 150, 55, 55, 255 };
+    static constexpr Color BADGE_SCREAM_TEXT = { 255, 110, 110, 255 };
+
+    static constexpr Color TAB_ACTIVE_BG = { 42, 42, 56, 255 };
+    static constexpr Color TAB_ACTIVE_FG = { 220, 220, 235, 255 };
+    static constexpr Color TAB_IDLE_FG = { 100, 100, 120, 255 };
 
     void render_avatar(AssetManager& assets, const Rectangle& avatar_rect, bool current_blink_state, ShaderEditor& shaderEditor, const Vector2& shakeOffset);
     void render_fps(int screen_width, float dpi, int font_size);
     void render_tips(int screen_height, float dpi, int font_size);
     void render_ui(float volume);
+    void render_sidebar(float volume, float dpi);
+    void render_menubar(float dpi, MenuBar& menuBar, AssetManager& assets, SpriteEditor& spriteEditor, ShaderEditor& shaderEditor);
+    void render_state_badges(float x, float y, float dpi);
     bool render_button(Rectangle bounds, const char* text, float dpi);
     void render_volume_bar(float volume, int bar_x, int bar_y);
     void update_animation(float delta_time);
