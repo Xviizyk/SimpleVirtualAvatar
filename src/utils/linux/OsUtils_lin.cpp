@@ -4,6 +4,8 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
 
+const auto X11_None = None;
+
 #undef Font
 #undef None
 #undef Status
@@ -150,7 +152,7 @@ namespace OsUtilsLin {
             XShapeCombineRectangles(dpy, win, ShapeInput, 0, 0, &rect, 0,
                                     ShapeSet, Unsorted);
         } else {
-            XShapeCombineMask(dpy, win, ShapeInput, 0, 0, None, ShapeSet);
+            XShapeCombineMask(dpy, win, ShapeInput, 0, 0, X11_None, ShapeSet);
         }
         XFlush(dpy);
     }
