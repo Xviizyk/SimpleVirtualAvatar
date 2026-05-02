@@ -4,167 +4,113 @@
 ![C++](https://img.shields.io/badge/C++-20-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
-## States & Animations
-
-The avatar has 3 different states:
-
-| Animation | Volume |
-|-----------|-----------|
-| Idle | 0.0 - 0.2 |
-| Talk | 0.2 - 0.7 |
-| Scream | 0.7 - 1.0 |
-
-## What was used
-
-| Component | Technology |
-|-----------|-----------|
-| Graphics | [Raylib](https://www.raylib.com/) |
-| Audio Input | [miniAudio](https://miniaud.io/) |
-| Build System | CMake 4.0+ |
-| Language | C++20 |
-| Profiling (Optional) | [Tracy](https://github.com/wolfpld/tracy) |
-
-## Requirements
-
-### Windows (MSVC / MinGW)
-- **CMake** 4.0 or later
-- **Visual Studio 2022** (Recommended) or **MinGW-w64** (GCC 11.0+)
-- **Git**
-
-### Linux
-- **CMake** 4.0 or later
-- **GCC/Clang** with C++20 support
-- **Git**
-- Development packages: `build-essential`, `libx11-dev`, `libxrandr-dev`, `libxinerama-dev`, `libxcursor-dev`, `libxi-dev`, `libgl1-mesa-dev`
-
-### macOS
-- **CMake** 4.0 or later
-- **Clang** (Xcode Command Line Tools)
-- **Git**
-
-## Getting started
-
-### 1. Clone and setup dependencies
-
-```bash
-git clone https://github.com/Xviizyk/SimpleVirtualAvatar.git
-cd SimpleVirtualAvatar
-
-# Clone required external libraries
-git clone https://github.com/raysan5/raylib.git external/raylib
-git clone https://github.com/mackron/miniaudio.git external/miniaudio
-```
-
-### 2. Install platform-specific dependencies
-
-#### Linux
-```bash
-sudo apt-get update
-sudo apt-get install -y build-essential cmake git libx11-dev libxrandr-dev \
-    libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
-```
-
-#### macOS
-```bash
-xcode-select --install
-brew install cmake
-```
-
-#### Windows
-Everything is already pre-installed in Visual Studio 2022
-
-### 3. Build the project
-
-#### Windows (Visual Studio)
-```powershell
-mkdir build
-cd build
-cmake -G "Visual Studio 17 2022" -A x64 ..
-cmake --build . --config Release
-```
-
-#### Windows (Ninja/Clang)
-```powershell
-mkdir build
-cd build
-cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release ^
-  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
-cmake --build .
-```
-
-#### Linux / macOS
-```bash
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . -j$(nproc)  # Linux
-cmake --build . -j$(sysctl -n hw.ncpu)  # macOS
-```
-
-### 4. Run the application
-
-**Windows:**
-```bash
-build\Release\SimpleVirtualAvatar.exe
-```
-
-**Linux/macOS:**
-```bash
-./build/SimpleVirtualAvatar
-```
-
-## Build options
-
-```bash
-# Debug build with symbols
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-# Release build (optimized)
-cmake -DCMAKE_BUILD_TYPE=Release ..
-
-# Release with debug info
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-
-# Enable Tracy profiler (optional)
-cmake -DENABLE_TRACY=ON ..
-
-# Cross-compile for ARM64
-cmake -DCROSS_COMPILE_ARM64=ON ..
-```
-
-## Optimizations
-
-The CMakeLists.txt includes platform-specific optimizations:
-- **MSVC**: `/Ot` (speed), `/GL` (whole program optimization), `/arch:AVX2`
-- **GCC/Clang**: Standard optimization flags with ARM64 support for cross-compilation
-
-## Profiling
-
-To enable Tracy profiler integration:
-```bash
-cmake -DENABLE_TRACY=ON ..
-```
-
-Then connect with [Tracy Client](https://github.com/wolfpld/tracy) to profile real-time performance.
-
-## License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE).
-
-Copyright (c) 2026 Xviizyk
-
-## Contributing
-
-No.
-
-## Support
-
-For issues, questions, or suggestions, please don't send them.
-
-## Asset Credits
-
-Custom avatar sprites included. Feel free to replace with your own animated sprites.
+**SimpleVirtualAvatar** is a lightweight, cross-platform desktop application designed to render reactive 2D avatars. It tracks your system audio in real-time to animate an avatar based on volume thresholds, making it perfect for streamers and content creators who want a simple, high-performance alternative to complex VTubing software.
 
 ---
 
-Sorry for my English, it’s not my native language.
+## 🌟 Key Features
+
+*   **Real-time Audio Reactivity:** Avatar states change dynamically based on microphone or system volume.
+*   **Cross-Platform Support:** Native performance on Windows (Win32/DWM), Linux (X11), and macOS (AppKit).
+*   **Ultra-Lightweight:** Built with C++20 and Raylib for minimal CPU/GPU footprint.
+*   **Transparent Windowing:** Support for transparent backgrounds to overlay the avatar on other apps or streams.
+*   **Modern UI:** Sleek sidebar and state-tracking badge system for easy configuration.
+
+## 🎭 States & Animations
+
+The avatar transitions between three distinct states based on the detected volume level:
+
+| Animation | Volume Threshold | Description |
+|-----------|------------------|-------------|
+| **Idle**  | 0.0 - 0.2        | Static or breathing animation when silent. |
+| **Talk**  | 0.2 - 0.7        | Active talking animation. |
+| **Scream**| 0.7 - 1.0        | High-volume reactive state. |
+
+---
+
+## 🛠 Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| **Language** | C++20 |
+| **Graphics** | [Raylib](https://www.raylib.com/) |
+| **Audio** | [miniAudio](https://miniaud.io/) |
+| **Build System** | CMake 3.31+ / CPM[cite: 1] |
+| **UI** | Custom Modular UI system |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+*   **CMake 3.31** or later
+*   **Git**
+*   **C++20 Compliant Compiler:** 
+    *   Windows: Visual Studio 2022 (MSVC) or MinGW-w64 (GCC 11+)
+    *   Linux: GCC or Clang
+    *   macOS: Xcode Command Line Tools (Clang)
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Xviizyk/SimpleVirtualAvatar.git
+cd SimpleVirtualAvatar
+```
+*Note: Dependencies like `raylib` and `miniaudio` are handled automatically via CPM during the build process[cite: 1, 2].*
+
+### 2. Build the Project
+
+#### Windows (PowerShell)
+```powershell
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . --config Release
+```
+
+#### Linux / macOS (Terminal)
+```bash
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . -j$(nproc)
+```
+
+### 3. Run
+**Windows:** `build\Release\SimpleVirtualAvatar.exe`
+**Linux/macOS:** `./build/SimpleVirtualAvatar`
+
+---
+
+## ⚙️ Configuration
+
+On the first launch, the application creates a `config.json` and folders for `assets/` and `shaders/` in your platform's local application data directory:
+*   **Windows:** `%APPDATA%/SimpleVirtualAvatar`
+*   **Linux/macOS:** `~/.config/SimpleVirtualAvatar`
+
+You can customize audio thresholds, shake effects, and file paths directly in the configuration file.
+
+---
+
+## 📊 Build Options
+
+Toggle advanced features via CMake flags:
+*   `-DENABLE_TRACY=ON`: Enable integration with the Tracy Profiler (development only).
+*   `-DCROSS_COMPILE_ARM64=ON`: Optimize for ARM64 architectures.
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+Copyright (c) 2026 **Xviizyk**
+
+---
+
+## 🤝 Contributing & Support
+
+*   **Contributing:** No.
+*   **Support:** For issues, questions, or suggestions, please don't send them.
+
+> *Sorry for my English, it’s not my native language.*
