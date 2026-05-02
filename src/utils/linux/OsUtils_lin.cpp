@@ -144,7 +144,7 @@ namespace OsUtilsLin {
             XShapeCombineRectangles(dpy, win, ShapeInput, 0, 0, &rect, 0,
                                     ShapeSet, Unsorted);
         } else {
-            XShapeCombineMask(dpy, win, ShapeInput, 0, 0, X11_None, ShapeSet);
+            XShapeCombineMask(dpy, win, ShapeInput, 0, 0, None, ShapeSet);
         }
         XFlush(dpy);
     }
@@ -176,26 +176,9 @@ namespace OsUtilsLin {
         keep_focus(h);
     }
 
-    void set_overlay_mode(void* h, bool overlay) {
-        if (overlay) {
-            SetWindowState(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
-            setup_overlay(h);
-        } else {
-            ClearWindowState(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED);
-        }
-    }
-
     void make_window_ghost(void* h) {
         setup_overlay(h);
         set_click_through(h, true);
-    }
-
-    bool is_key_down_global(int raylibKey) {
-        return IsKeyDown(raylibKey);
-    }
-
-    bool is_shift_pressed_global() {
-        return IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
     }
 
     bool open_file_dialog(void*, std::string& outPath) {

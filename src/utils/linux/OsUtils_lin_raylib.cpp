@@ -7,6 +7,14 @@ namespace OsUtilsLin {
         return scale.x;
     }
 
+    bool is_key_down_global(int raylibKey) {
+        return IsKeyDown(raylibKey);
+    }
+    
+    bool is_shift_pressed_global() {
+        return IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
+    }
+
     void set_overlay_mode(void* h, bool overlay) {
         if (overlay) {
             SetWindowState(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST);
