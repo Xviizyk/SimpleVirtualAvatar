@@ -3,15 +3,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
-
-const auto X11_None = None;
-
-#undef Font
-#undef None
-#undef Status
-
 #include <nfd.h>
-#include <raylib.h>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -168,10 +160,6 @@ namespace OsUtilsLin {
                     "_NET_WM_STATE_SKIP_PAGER");
     }
 
-    float get_dpi_scale(void*) {
-        Vector2 scale = GetWindowScaleDPI();
-        return scale.x;
-    }
 
     void set_window_always_on_top(void* h) {
         Display* dpy = get_display();
@@ -195,11 +183,6 @@ namespace OsUtilsLin {
         } else {
             ClearWindowState(FLAG_WINDOW_TRANSPARENT | FLAG_WINDOW_UNDECORATED);
         }
-    }
-
-    void set_window_borderless(void* h, bool borderless) {
-        if (borderless) SetWindowState(FLAG_WINDOW_UNDECORATED);
-        else            ClearWindowState(FLAG_WINDOW_UNDECORATED);
     }
 
     void make_window_ghost(void* h) {
