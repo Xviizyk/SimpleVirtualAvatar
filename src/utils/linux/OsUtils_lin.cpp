@@ -3,6 +3,11 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/shape.h>
+
+#undef Font
+#undef None
+#undef Status
+
 #include <nfd.h>
 #include <raylib.h>
 #include <cstdlib>
