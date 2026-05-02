@@ -3,6 +3,9 @@ name: Build Windows AMD64
 on:
   workflow_call:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: Windows AMD64

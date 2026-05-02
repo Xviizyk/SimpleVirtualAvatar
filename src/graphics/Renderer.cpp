@@ -172,9 +172,9 @@ void Renderer::render_state_badges(float x, float y, float dpi) {
     };
 
     static const BadgeDef badges[] = {
-        { "Idle",   AvatarState::IDLE,      { 180,180,180,200 } },
+        { "Idle",   AvatarState::IDLE,      { 180,180,180,255 } },
         { "Talk",   AvatarState::TALKING,   {  74,158,255,255 } },
-        { "Scream", AvatarState::SCREAMING, { 255, 80, 80,230 } },
+        { "Scream", AvatarState::SCREAMING, { 255, 80, 80,255 } },
     };
 
     const int   fs      = static_cast<int>(BODY_FS * dpi);
@@ -218,7 +218,7 @@ void Renderer::render_state_badges(float x, float y, float dpi) {
         float dot_cx = cx + pad_x + dot_r;
         float dot_cy = y + bh / 2.0f;
         DrawCircle(static_cast<int>(dot_cx), static_cast<int>(dot_cy),
-                   dot_r, active ? b.dot_active : Color{180,180,180,50});
+                   dot_r, active ? b.dot_active : Color{180,180,180,255});
 
         DrawText(b.label,
             static_cast<int>(cx + pad_x + dot_r * 2 + dot_gap),
@@ -294,6 +294,43 @@ void Renderer::render_sidebar(float volume, float dpi) {
 
     y += btn_sz + pad * 0.75f;
 
+    draw_section_label("DPI SCALE", pad, y, dpi);
+    y += line;
+
+    is_anything_pressed = false;
+    if (render_button({ pad, y, btn_sz, btn_sz }, "-", dpi)) {
+        dpi_scale_mult -= 0.1f * GetFrameTime();
+        is_required_update_dpi_scale = true;
+    }
+    if (render_button({ pad + btn_sz + btn_gap, y, btn_sz, btn_sz }, "+", dpi)) {
+        dpi_scale_mult += 0.1f * GetFrameTime();
+        is_required_update_dpi_scale = true;
+    }
+
+    dpi_scale_mult = std::clamp(dpi_scale_mult, 0.1f, 3.0f);
+
+    char sens_text_dpi[32];
+    std::snprintf(sens_text_dpi, sizeof(sens_text_dpi), "%.2f", dpi_scale_mult);
+    const float val_x_dpi = pad + btn_sz * 2 + btn_gap * 2;
+
+    DrawText(sens_text_dpi, static_cast<int>(val_x_dpi), static_cast<int>(y + (btn_sz - bfs) / 2.0f),
+             bfs, TEXT_BRIGHT);
+
+    const float track_x_dpi = val_x_dpi + MeasureText(sens_text_dpi, bfs) + 8.0f * dpi;
+    const float track_w_dpi = sw - pad - track_x_dpi;
+    const float track_y_dpi = y + btn_sz / 2.0f - BAR_H * dpi / 2.0f;
+    const float track_h_dpi = BAR_H * dpi;
+
+    if (track_w > 12.0f * dpi) {
+        DrawRectangle(static_cast<int>(track_x_dpi), static_cast<int>(track_y_dpi),
+                      static_cast<int>(track_w_dpi), static_cast<int>(track_h_dpi), BAR_TRACK);
+        float fill_w_dpi = track_w * (dpi_scale_mult / 100.0f);
+        DrawRectangle(static_cast<int>(track_x_dpi), static_cast<int>(track_y_dpi),
+                      static_cast<int>(fill_w_dpi), static_cast<int>(track_h_dpi), BAR_IDLE);
+    }
+
+    y += btn_sz + pad * 0.75f;
+
     draw_divider(pad, y, sw - pad * 2, dpi);
     y += DIVIDER_H * dpi + pad;
 
@@ -345,7 +382,7 @@ bool Renderer::render_button(Rectangle bounds, const char* text, float dpi) {
     bool    pressed = false;
 
     Color col = hovered ? BTN_HOVER : BTN_NORMAL;
-    if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    if (hovered && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
         col     = BTN_PRESSED;
         pressed = true;
         is_anything_pressed = true;
@@ -460,23 +497,25 @@ void Renderer::update(AssetManager& assets, float volume, MenuBar& menuBar,
 
 void Renderer::update_dpi_scale(float delta_time) {
     update_dpi_scale_timer -= delta_time;
-    if (update_dpi_scale_timer > 0.0f) return;
+    if (update_dpi_scale_timer > 0.0f && !is_required_update_dpi_scale) return;
     update_dpi_scale_timer = 0.5f;
 
     void* hwnd = GetWindowHandle();
-    if (!hwnd) return;
+    if (!hwnd && !is_required_update_dpi_scale) return;
 
     Vector2 pos = GetWindowPosition();
     int     w   = GetScreenWidth();
 
     if (last_window_position.x == pos.x &&
         last_window_position.y == pos.y &&
-        last_render_width      == w)
+        last_render_width      == w     &&
+        !is_required_update_dpi_scale)
         return;
 
+    is_required_update_dpi_scale = false;
     last_window_position = pos;
     last_render_width    = w;
-    last_dpi_scale       = winutils.get_dpi_scale(hwnd);
+    last_dpi_scale       = winutils.get_dpi_scale(hwnd) * dpi_scale_mult;
 }
 
 void Renderer::update_animation(float delta_time) {

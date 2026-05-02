@@ -23,23 +23,26 @@ enum class AvatarCorner {
 class Renderer {
 private:
     Rectangle windowRect = { 100, 100, 600, 400 };
-    bool isDragging = false;
-    bool isResizing = false;
-    Vector2 dragOffset = { 0, 0 };
-    const float RESIZE_BORDER = 10.0f;
 
+    Vector2 dragOffset = { 0, 0 };
     Vector2 drag_offset = {0.0f, 0.0f};
     Vector2 avatar_position = {100.0f, 100.0f};
     Vector2 last_window_position = {0.0f, 0.0f};
 
     char fps_buffer[16]{};
 
+    const float RESIZE_BORDER = 10.0f;
+
     float fps_update_timer = 0.0f;
     float avatar_scale = 1.0f;
     float sensitivity = 3.0f;
     float last_dpi_scale = 1.0f;
+    float dpi_scale_mult = 1.25f;
     float update_dpi_scale_timer = 0.0f;
 
+    bool is_required_update_dpi_scale = false;
+    bool isDragging = false;
+    bool isResizing = false;
     bool is_ui_visible = true;
     bool is_anything_pressed = false;
     bool is_dragging = false;

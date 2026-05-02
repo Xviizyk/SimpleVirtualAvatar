@@ -23,6 +23,7 @@ All notable changes to the **SimpleVirtualAvatar** project are documented in thi
 
 ### Graphics & UI Evolution
 * **New Sidebar UI:** Replaced the legacy floating buttons with a sleek, semi-transparent sidebar and menu bar system.
+* **Dynamic DPI scale change:** You can dynamicly change DPI scale. Made for improved user experience.
 * **State Badge System:** Introduced a new "State Badge" UI component with interactive dots and color-coded statuses (Idle, Talk, Scream).
 * **Enhanced Visual Feedback:**
     - Redesigned the volume bar with dynamic color transitions: `BAR_IDLE`, `BAR_TALK`, and `BAR_SCREAM` based on current audio levels.
