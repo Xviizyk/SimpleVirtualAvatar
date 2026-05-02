@@ -1,35 +1,35 @@
-# name: Build Linux AMD64
+name: Build Linux AMD64
 
-# on:
-#   workflow_call:
+on:
+  workflow_call:
 
-# jobs:
-#   build:
-#     name: Linux AMD64
-#     runs-on: ubuntu-22.04
-#     steps:
-#       - uses: actions/checkout@v4
-#         with:
-#           submodules: recursive
+jobs:
+  build:
+    name: Linux AMD64
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
-#       - name: Install dependencies
-#         run: |
-#           sudo apt-get update
-#           sudo apt-get install -y \
-#             build-essential cmake \
-#             libx11-dev libxcursor-dev libxinerama-dev \
-#             libxrandr-dev libxi-dev \
-#             libgl1-mesa-dev libglu1-mesa-dev
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake \
+            libx11-dev libxcursor-dev libxinerama-dev \
+            libxrandr-dev libxi-dev \
+            libgl1-mesa-dev libglu1-mesa-dev
       
-#       - name: Configure
-#         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       
-#       - name: Build
-#         run: cmake --build build --config Release --parallel
+      - name: Build
+        run: cmake --build build --config Release --parallel
       
-#       - name: Upload artifacts
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: SimpleVAvatar-linux-amd64
-#           path: build/SimpleVirtualAvatar
-#           if-no-files-found: warn
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SimpleVAvatar-linux-amd64
+          path: build/SimpleVirtualAvatar
+          if-no-files-found: warn
