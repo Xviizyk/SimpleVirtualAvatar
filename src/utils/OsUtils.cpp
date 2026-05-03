@@ -31,6 +31,6 @@ void OsUtils::make_window_ghost(void* h) { Impl::make_window_ghost(h); }
 
 bool OsUtils::is_key_down_global(int k) { return Impl::is_key_down_global(k); }
 bool OsUtils::is_shift_pressed_global() { return Impl::is_shift_pressed_global(); }
-bool OsUtils::open_file_dialog(void* h, std::string& p) { return Impl::open_file_dialog(h, p); }
+bool OsUtils::open_file_dialog(void* h, std::string& p, std::string t) { return Impl::open_file_dialog(h, p, t); }
 
 std::string OsUtils::get_appdata_path() { return Impl::get_appdata_path(); }

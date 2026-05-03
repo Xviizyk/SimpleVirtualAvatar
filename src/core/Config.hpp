@@ -12,10 +12,14 @@ struct Config {
     float shakeDuration = 0.25f;
 
     enum class ShakeMode {
-        X = 0,
-        Y = 1,
+        X  = 0,
+        Y  = 1,
         XY = 2
     } shakeMode = ShakeMode::XY;
+
+    bool  wiggleEnabled = false;
+    float wiggleSpeed = 6.0f;
+    float wiggleAmplitude = 4.0f;
 };
 
 class ConfigManager {

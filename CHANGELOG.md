@@ -2,6 +2,27 @@
 
 All notable changes to the **SimpleVirtualAvatar** project are documented in this file. This project adheres to Semantic Versioning.
 
+## [3.1.0] — 2026-05-03
+
+### Added
+*   **Shader Library System:** Introduced a new UI for managing multiple shaders[cite: 1].
+    *   **Preset Library:** Quick access to standard presets: `Wave`, `RGB Shift`, `Scanlines`, and `CRT`[cite: 1].
+    *   **Custom Shader Support:** Users can now import and save their own `.frag` files via a native file dialog[cite: 1].
+    *   **Shader Management:** Added the ability to delete custom shader entries from the library[cite: 1].
+*   **New "Wiggle" Animation:** Implemented a continuous sine-based idle movement separate from the state-triggered "Shake" system[cite: 1].
+    *   Added configuration options for `wiggle_speed` and `wiggle_amplitude`[cite: 1].
+*   **Dynamic Terminal Branding:** The CMake configuration now detects terminal width to display either a standard or wide-format ASCII logo[cite: 1].
+*   **Example Shaders:** Added reference fragment shaders: `heat_distortion.frag`, `neon_pulse.frag`, and `swirl_vortex.frag`[cite: 1].
+
+### Changed
+*   **UI Decoupling:** Refactored the `Renderer` to use self-contained sub-panels. `ShakeSettings` and `ShaderEditor` now manage their own internal states[cite: 1].
+*   **DPI Scaling Logic:** Improved UI responsiveness by applying the `last_dpi_scale` multiplier across all sub-menus and buttons[cite: 1].
+*   **Config v2.1:** Updated the configuration schema to support wiggle parameters and shader path persistence[cite: 1].
+
+### Fixed
+*   **UI Input Passthrough:** Resolved an issue where dragging the avatar would trigger if the user was clicking inside a UI sub-window[cite: 1].
+*   **Shader Memory Safety:** Improved `Renderer` and `ShaderEditor` destructors to ensure GPU resources are freed correctly upon exit[cite: 1].
+
 ## [3.0.0] — 2026-05-02
 
 ### Major Architectural Overhaul

@@ -17,6 +17,6 @@ public:
     static void make_window_ghost(void* nativeHandle = nullptr);
     static bool is_key_down_global(int raylibKey);
     static bool is_shift_pressed_global();
-    static bool open_file_dialog(void* nativeHandle, std::string& outPath);
+    static bool open_file_dialog(void* nativeHandle, std::string& outPath, std::string type);
     static std::string get_appdata_path();
 };

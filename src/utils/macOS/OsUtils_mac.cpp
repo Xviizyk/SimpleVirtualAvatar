@@ -162,11 +162,23 @@ namespace OsUtilsMac {
         return IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
     }
 
-    bool open_file_dialog(void*, std::string& outPath) {
+    bool open_file_dialog(void*, std::string& outPath, std::string type) {
         nfdchar_t* outPathC = nullptr;
-        nfdfilteritem_t filters[] = { { "Image Files", "png,jpg,jpeg,bmp,tga" } };
+        nfdfilteritem_t* filters = nullptr;
+        nfdfiltersize_t filterCount = 0;
 
-        nfdresult_t result = NFD_OpenDialog(&outPathC, filters, 1, nullptr);
+        nfdfilteritem_t shaderFilters[] = { { "Shader Files", "frag,fs,glsl" } };
+        nfdfilteritem_t imageFilters[] = { { "Image Files", "png,jpg,jpeg,bmp,tga" } };
+
+        if (type == "Shaders") {
+            filters = shaderFilters;
+            filterCount = 1;
+        } else if (type == "Images") {
+            filters = imageFilters;
+            filterCount = 1;
+        }
+
+        nfdresult_t result = NFD_OpenDialog(&outPathC, filters, filterCount, nullptr);
 
         if (result == NFD_OKAY) {
             outPath = outPathC;

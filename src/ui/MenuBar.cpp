@@ -1,5 +1,4 @@
 #include "MenuBar.hpp"
-
 #include "raylib.h"
 
 #include <algorithm>
@@ -19,7 +18,7 @@ namespace {
         const int tw = MeasureText(text, fs);
         DrawText(text, static_cast<int>(r.x + (r.width - tw) / 2.0f), static_cast<int>(r.y + 4.0f), fs, RAYWHITE);
     }
-}
+}   
 
 MenuBarAction MenuBar::draw() {
     MenuBarAction action{};

@@ -1,6 +1,7 @@
 #include "SpriteEditor.hpp"
 #include "raylib.h"
 #include "../utils/OsUtils.hpp"
+#include "../core/Config.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -43,8 +44,8 @@ bool SpriteEditor::is_open() const {
 int& SpriteEditor::frame_count_ref() {
     auto& cfg = ConfigManager::get();
     switch (editingState) {
-        case AvatarState::IDLE:     return cfg.maxIdleFrames;
-        case AvatarState::TALKING:  return cfg.maxTalkFrames;
+        case AvatarState::IDLE: return cfg.maxIdleFrames;
+        case AvatarState::TALKING: return cfg.maxTalkFrames;
         case AvatarState::SCREAMING: return cfg.maxScreamFrames;
     }
     return cfg.maxIdleFrames;
@@ -52,8 +53,8 @@ int& SpriteEditor::frame_count_ref() {
 
 const char* SpriteEditor::state_name() const {
     switch (editingState) {
-        case AvatarState::IDLE:     return "Idle";
-        case AvatarState::TALKING:  return "Talk";
+        case AvatarState::IDLE: return "Idle";
+        case AvatarState::TALKING: return "Talk";
         case AvatarState::SCREAMING: return "Scream";
     }
     return "Unknown";
@@ -61,8 +62,8 @@ const char* SpriteEditor::state_name() const {
 
 const char* SpriteEditor::prefix() const {
     switch (editingState) {
-        case AvatarState::IDLE:     return "idle";
-        case AvatarState::TALKING:  return "talk";
+        case AvatarState::IDLE: return "idle";
+        case AvatarState::TALKING: return "talk";
         case AvatarState::SCREAMING: return "scream";
     }
     return "idle";
@@ -92,7 +93,7 @@ void SpriteEditor::sync_to_config_and_reload(AssetManager& assets) {
 }
 
 bool SpriteEditor::open_file_dialog(std::string& outPath) const {
-    return OsUtils::open_file_dialog(GetWindowHandle(), outPath);
+    return OsUtils::open_file_dialog(GetWindowHandle(), outPath, "Images");
 }
 
 bool SpriteEditor::assign_image_to_slot(int index, const std::string& sourcePath, AssetManager& assets) {
@@ -111,16 +112,20 @@ bool SpriteEditor::assign_image_to_slot(int index, const std::string& sourcePath
     return true;
 }
 
-void SpriteEditor::draw(AssetManager& assets) {
+void SpriteEditor::draw(AssetManager& assets, float dpi) {
     if (!open) return;
 
+    const float s = dpi;
+
     Vector2 mouse = GetMousePosition();
-    Rectangle headerRect = { windowRect.x, windowRect.y, windowRect.width, 30.0f };
+
+    Rectangle headerRect = { windowRect.x, windowRect.y, windowRect.width, 30.0f * s };
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mouse, headerRect)) {
         isDragging = true;
         dragOffset = { mouse.x - windowRect.x, mouse.y - windowRect.y };
     }
+
     if (isDragging) {
         windowRect.x = mouse.x - dragOffset.x;
         windowRect.y = mouse.y - dragOffset.y;
@@ -130,49 +135,62 @@ void SpriteEditor::draw(AssetManager& assets) {
     const float panelX = windowRect.x;
     const float panelY = windowRect.y;
     const float panelW = windowRect.width;
-    
-    const float slotW = (panelW - 30.0f) / static_cast<float>(COLUMNS);
-    const float slotH = 68.0f;
-    const float headerH = 110.0f;
+
+    const float slotW = (panelW - 30.0f * s) / static_cast<float>(COLUMNS);
+    const float slotH = 68.0f * s;
+    const float headerH = 110.0f * s;
+
     const int rows = (pendingFrames + COLUMNS - 1) / COLUMNS;
-    const float calculatedH = headerH + rows * (slotH + 10.0f) + 20.0f;
+    const float calculatedH = headerH + rows * (slotH + 10.0f * s) + 20.0f * s;
     windowRect.height = calculatedH;
-    
+
     const float panelH = windowRect.height;
 
-    DrawRectangleRec(Rectangle{panelX, panelY, panelW, panelH}, Color{28, 28, 32, 255});
-    DrawRectangleLinesEx(Rectangle{panelX, panelY, panelW, panelH}, 1.0f, Color{90, 90, 100, 255});
-    
-    DrawText((std::string("Sprite Editor - ") + state_name()).c_str(), 
-              static_cast<int>(panelX + 14.0f), static_cast<int>(panelY + 12.0f), 22, RAYWHITE);
+    DrawRectangleRec({panelX, panelY, panelW, panelH}, Color{28, 28, 32, 255});
+    DrawRectangleLinesEx({panelX, panelY, panelW, panelH}, 1.0f * s, Color{90, 90, 100, 255});
 
-    if (ui_button(Rectangle{panelX + panelW - 34.0f, panelY + 10.0f, 22.0f, 22.0f}, "X")) {
+    DrawText((std::string("Sprite Editor - ") + state_name()).c_str(),
+             static_cast<int>(panelX + 14.0f * s),
+             static_cast<int>(panelY + 12.0f * s),
+             static_cast<int>(22 * s), RAYWHITE);
+
+    if (ui_button({panelX + panelW - 34.0f * s, panelY + 10.0f * s, 22.0f * s, 22.0f * s}, "X")) {
         open = false;
         return;
     }
 
-    DrawText("Frames:", static_cast<int>(panelX + 14.0f), static_cast<int>(panelY + 48.0f), 18, LIGHTGRAY);
+    DrawText("Frames:",
+             static_cast<int>(panelX + 14.0f * s),
+             static_cast<int>(panelY + 48.0f * s),
+             static_cast<int>(18 * s), LIGHTGRAY);
 
-    if (ui_button(Rectangle{panelX + 85.0f, panelY + 42.0f, 30.0f, 28.0f}, "-")) {
+    if (ui_button({panelX + 85.0f * s, panelY + 42.0f * s, 30.0f * s, 28.0f * s}, "-")) {
         pendingFrames = std::max(1, pendingFrames - 1);
         sync_to_config_and_reload(assets);
     }
-    ui_button(Rectangle{panelX + 120.0f, panelY + 42.0f, 40.0f, 28.0f}, std::to_string(pendingFrames).c_str());
-    if (ui_button(Rectangle{panelX + 165.0f, panelY + 42.0f, 30.0f, 28.0f}, "+")) {
+
+    ui_button({panelX + 120.0f * s, panelY + 42.0f * s, 40.0f * s, 28.0f * s},
+              std::to_string(pendingFrames).c_str());
+
+    if (ui_button({panelX + 165.0f * s, panelY + 42.0f * s, 30.0f * s, 28.0f * s}, "+")) {
         pendingFrames = std::min(MAX_FRAMES, pendingFrames + 1);
         sync_to_config_and_reload(assets);
     }
 
     const char* blinkBtnText = editingBlink ? "MODE: BLINK" : "MODE: NORMAL";
-    if (ui_button(Rectangle{panelX + 210.0f, panelY + 42.0f, 150.0f, 28.0f}, blinkBtnText)) {
+    if (ui_button({panelX + 210.0f * s, panelY + 42.0f * s, 150.0f * s, 28.0f * s}, blinkBtnText)) {
         editingBlink = !editingBlink;
     }
 
-    DrawText("Click a slot to assign or drag & drop image.", 
-              static_cast<int>(panelX + 14.0f), static_cast<int>(panelY + 80.0f), 16, Color{170, 170, 180, 255});
+    DrawText("Click a slot to assign or drag & drop image.",
+             static_cast<int>(panelX + 14.0f * s),
+             static_cast<int>(panelY + 80.0f * s),
+             static_cast<int>(16 * s),
+             Color{170, 170, 180, 255});
 
     std::vector<Rectangle> slotRects;
-    const float startX = panelX + 10.0f;
+
+    const float startX = panelX + 10.0f * s;
     const float slotsStartY = panelY + headerH;
 
     for (int i = 0; i < pendingFrames; ++i) {
@@ -180,8 +198,8 @@ void SpriteEditor::draw(AssetManager& assets) {
         const int row = i / COLUMNS;
 
         Rectangle r{
-            startX + col * (slotW + 8.0f),
-            slotsStartY + row * (slotH + 10.0f),
+            startX + col * (slotW + 8.0f * s),
+            slotsStartY + row * (slotH + 10.0f * s),
             slotW,
             slotH
         };
@@ -189,23 +207,27 @@ void SpriteEditor::draw(AssetManager& assets) {
 
         const auto path = frame_path(i);
         const bool exists = std::filesystem::exists(path);
-        
-        Color bg;
-        if (exists) {
-            bg = editingBlink ? Color{75, 45, 95, 255} : Color{45, 75, 45, 255}; 
-        } else {
-            bg = Color{50, 50, 58, 255};
-        }
+
+        Color bg = exists
+            ? (editingBlink ? Color{75, 45, 95, 255} : Color{45, 75, 45, 255})
+            : Color{50, 50, 58, 255};
 
         DrawRectangleRounded(r, 0.10f, 6, bg);
         DrawRectangleRoundedLines(r, 0.10f, 6, exists ? RAYWHITE : Color{120, 120, 130, 255});
 
-        DrawText(TextFormat("%s %d", editingBlink ? "Blink" : "Frame", i), 
-                  static_cast<int>(r.x + 8.0f), static_cast<int>(r.y + 8.0f), 18, RAYWHITE);
-        
+        DrawText(TextFormat("%s %d", editingBlink ? "Blink" : "Frame", i),
+                 static_cast<int>(r.x + 8.0f * s),
+                 static_cast<int>(r.y + 8.0f * s),
+                 static_cast<int>(18 * s), RAYWHITE);
+
         std::string label = exists ? BaseName(path) : "Empty";
         if (label.length() > 15) label = label.substr(0, 12) + "...";
-        DrawText(label.c_str(), static_cast<int>(r.x + 8.0f), static_cast<int>(r.y + 32.0f), 16, Color{225, 225, 230, 255});
+
+        DrawText(label.c_str(),
+                 static_cast<int>(r.x + 8.0f * s),
+                 static_cast<int>(r.y + 32.0f * s),
+                 static_cast<int>(16 * s),
+                 Color{225, 225, 230, 255});
     }
 
     for (int i = 0; i < pendingFrames; ++i) {
@@ -219,7 +241,8 @@ void SpriteEditor::draw(AssetManager& assets) {
         FilePathList dropped = LoadDroppedFiles();
         for (int i = 0; i < pendingFrames; ++i) {
             if (CheckCollisionPointRec(mouse, slotRects[i])) {
-                if (dropped.count > 0) assign_image_to_slot(i, dropped.paths[0], assets);
+                if (dropped.count > 0)
+                    assign_image_to_slot(i, dropped.paths[0], assets);
                 break;
             }
         }

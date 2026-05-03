@@ -1,5 +1,5 @@
 #include "../graphics/Renderer.hpp"
-
+#include "../system/AssetManager.hpp"
 #include "../utils/Utils.hpp"
 #include "../utils/OsUtils.hpp"
 
@@ -10,7 +10,7 @@
 #include <string>
 
 static constexpr float LABEL_FS      = 10.0f;
-static constexpr Color LABEL_COLOR = { 90, 90, 110, 255 };
+static constexpr Color LABEL_COLOR   = { 90, 90, 110, 255 };
 
 static constexpr float DIVIDER_H     = 1.0f;
 static constexpr Color DIVIDER_COLOR = { 38, 38, 46, 255 };
@@ -35,10 +35,10 @@ bool        Renderer::get_ui_visibility()  const { return is_ui_visible; }
 
 Color Renderer::get_color_by_state(AvatarState state) {
     switch (state) {
-        case AvatarState::IDLE:      return {100, 200, 100, 255};
-        case AvatarState::TALKING:   return {100, 150, 255, 255};
-        case AvatarState::SCREAMING: return {255, 100, 100, 255};
-        default:                      return WHITE;
+        case AvatarState::IDLE:      return { 100, 200, 100, 255 };
+        case AvatarState::TALKING:   return { 100, 150, 255, 255 };
+        case AvatarState::SCREAMING: return { 255, 100, 100, 255 };
+        default:                     return WHITE;
     }
 }
 
@@ -147,9 +147,9 @@ static void draw_divider(float x, float y, float w, float dpi) {
 }
 
 void Renderer::render_volume_bar(float volume, int bar_x, int bar_y) {
-    const float dpi    = last_dpi_scale;
-    const int   bw     = static_cast<int>(SIDEBAR_W * 0.82f * dpi);
-    const int   bh     = static_cast<int>(BAR_H * dpi);
+    const float dpi = last_dpi_scale;
+    const int bw = static_cast<int>(SIDEBAR_W * 0.82f * dpi);
+    const int bh = static_cast<int>(BAR_H * dpi);
 
     DrawRectangle(bar_x, bar_y, bw, bh, BAR_TRACK);
 
@@ -159,66 +159,59 @@ void Renderer::render_volume_bar(float volume, int bar_x, int bar_y) {
     Color bar_color = BAR_IDLE;
     if (current_state == AvatarState::TALKING)   bar_color = BAR_TALK;
     if (current_state == AvatarState::SCREAMING) bar_color = BAR_SCREAM;
-    if (norm > 0.9f) bar_color = BAR_SCREAM;
+    if (norm > 0.9f)                             bar_color = BAR_SCREAM;
 
     DrawRectangle(bar_x, bar_y, fill, bh, bar_color);
 }
 
 void Renderer::render_state_badges(float x, float y, float dpi) {
     struct BadgeDef {
-        const char*   label;
-        AvatarState   state;
-        Color         dot_active;
+        const char* label;
+        AvatarState state;
+        Color dot_active;
     };
 
     static const BadgeDef badges[] = {
-        { "Idle",   AvatarState::IDLE,      { 180,180,180,255 } },
-        { "Talk",   AvatarState::TALKING,   {  74,158,255,255 } },
-        { "Scream", AvatarState::SCREAMING, { 255, 80, 80,255 } },
+        { "Idle", AvatarState::IDLE, { 180, 180, 180, 255 } },
+        { "Talk", AvatarState::TALKING, {  74, 158, 255, 255 } },
+        { "Scream", AvatarState::SCREAMING, { 255,  80,  80, 255 } }
     };
 
-    const int   fs      = static_cast<int>(BODY_FS * dpi);
-    const float bh      = BADGE_H * dpi;
-    const float dot_r   = 4.0f  * dpi;
-    const float pad_x   = 8.0f  * dpi;
-    const float gap     = 6.0f  * dpi;
-    const float dot_gap = 6.0f  * dpi;
+    const int fs = static_cast<int>(BODY_FS * dpi);
+    const float bh = BADGE_H * dpi;
+    const float dot_r = 4.0f * dpi;
+    const float pad_x = 8.0f * dpi;
+    const float gap = 6.0f * dpi;
+    const float dot_gap = 6.0f * dpi;
 
-    Vector2 mouse   = GetMousePosition();
-    bool    clicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+    Vector2 mouse = GetMousePosition();
+    bool clicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
     float cx = x;
     for (auto& b : badges) {
-        const bool active  = (current_state == b.state);
+        const bool active = (current_state == b.state);
 
-        int   tw  = MeasureText(b.label, fs);
-        float bw  = pad_x * 2 + dot_r * 2 + dot_gap + tw;
+        int tw = MeasureText(b.label, fs);
+        float bw = pad_x * 2 + dot_r * 2 + dot_gap + tw;
 
-        Rectangle rec     = { cx, y, bw, bh };
-        bool      hovered = CheckCollisionPointRec(mouse, rec);
+        Rectangle rec = { cx, y, bw, bh };
+        bool hovered = CheckCollisionPointRec(mouse, rec);
 
         if (hovered && clicked && !is_anything_pressed) {
             set_avatar_state(b.state);
             is_anything_pressed = true;
         }
 
-        Color bg  = active  ? (b.state == AvatarState::SCREAMING ? BADGE_SCREAM_BG     : BADGE_ACTIVE_BG)
-                  : hovered ? BTN_HOVER
-                  :           BADGE_BG;
-        Color bdr = active  ? (b.state == AvatarState::SCREAMING ? BADGE_SCREAM_BORDER : BADGE_ACTIVE_BORDER)
-                  : hovered ? BADGE_BORDER
-                  :           BADGE_BORDER;
-        Color fg  = active  ? (b.state == AvatarState::SCREAMING ? BADGE_SCREAM_TEXT   : BADGE_ACTIVE_TEXT)
-                  : hovered ? TEXT_MID
-                  :           TEXT_DIM;
+        Color bg = active  ? (b.state == AvatarState::SCREAMING ? BADGE_SCREAM_BG : BADGE_ACTIVE_BG) : hovered ? BTN_HOVER : BADGE_BG;
+        Color bdr = active  ? (b.state == AvatarState::SCREAMING ? BADGE_SCREAM_BORDER : BADGE_ACTIVE_BORDER) : hovered ? BADGE_BORDER : BADGE_BORDER;
+        Color fg = active  ? (b.state == AvatarState::SCREAMING ? BADGE_SCREAM_TEXT : BADGE_ACTIVE_TEXT) : hovered ? TEXT_MID : TEXT_DIM;
 
         DrawRectangleRec(rec, bg);
         DrawRectangleLinesEx(rec, 0.5f, bdr);
 
         float dot_cx = cx + pad_x + dot_r;
         float dot_cy = y + bh / 2.0f;
-        DrawCircle(static_cast<int>(dot_cx), static_cast<int>(dot_cy),
-                   dot_r, active ? b.dot_active : Color{180,180,180,255});
+        DrawCircle(static_cast<int>(dot_cx), static_cast<int>(dot_cy), dot_r, active ? b.dot_active : Color{ 180, 180, 180, 255 });
 
         DrawText(b.label,
             static_cast<int>(cx + pad_x + dot_r * 2 + dot_gap),
@@ -230,13 +223,13 @@ void Renderer::render_state_badges(float x, float y, float dpi) {
 }
 
 void Renderer::render_sidebar(float volume, float dpi) {
-    const float sw   = SIDEBAR_W * dpi;
-    const float sh   = static_cast<float>(GetScreenHeight());
-    const float mh   = MENUBAR_H * dpi;
-    const float pad  = SECTION_PAD * dpi;
-    const int   lfs  = static_cast<int>(LABEL_FS * dpi);
-    const int   bfs  = static_cast<int>(BODY_FS  * dpi);
-    const float line = 18.0f * dpi;
+    const float sw = SIDEBAR_W * dpi;
+    const float sh = static_cast<float>(GetScreenHeight());
+    const float mh = MENUBAR_H * dpi;
+    const float pad = SECTION_PAD * dpi;
+    const int lfs = static_cast<int>(LABEL_FS * dpi);
+    const int bfs = static_cast<int>(BODY_FS * dpi);
+    const float line= 18.0f * dpi;
 
     DrawRectangle(0, static_cast<int>(mh), static_cast<int>(sw), static_cast<int>(sh - mh), BG_SIDEBAR);
     DrawRectangle(static_cast<int>(sw), static_cast<int>(mh), 1, static_cast<int>(sh - mh), BORDER_COLOR);
@@ -262,7 +255,7 @@ void Renderer::render_sidebar(float volume, float dpi) {
     y += line;
 
     const float btn_sz  = BTN_SIZE * dpi;
-    const float btn_gap = 6.0f * dpi;
+    const float btn_gap = 6.0f    * dpi;
 
     is_anything_pressed = false;
     if (render_button({ pad, y, btn_sz, btn_sz }, "-", dpi))
@@ -276,8 +269,8 @@ void Renderer::render_sidebar(float volume, float dpi) {
     std::snprintf(sens_text, sizeof(sens_text), "%.2f", sensitivity);
     const float val_x = pad + btn_sz * 2 + btn_gap * 2;
 
-    DrawText(sens_text, static_cast<int>(val_x), static_cast<int>(y + (btn_sz - bfs) / 2.0f),
-             bfs, TEXT_BRIGHT);
+    DrawText(sens_text, static_cast<int>(val_x),
+             static_cast<int>(y + (btn_sz - bfs) / 2.0f), bfs, TEXT_BRIGHT);
 
     const float track_x = val_x + MeasureText(sens_text, bfs) + 8.0f * dpi;
     const float track_w = sw - pad - track_x;
@@ -289,7 +282,7 @@ void Renderer::render_sidebar(float volume, float dpi) {
                       static_cast<int>(track_w), static_cast<int>(track_h), BAR_TRACK);
         float fill_w = track_w * (sensitivity / 100.0f);
         DrawRectangle(static_cast<int>(track_x), static_cast<int>(track_y),
-                      static_cast<int>(fill_w), static_cast<int>(track_h), BAR_IDLE);
+                      static_cast<int>(fill_w),  static_cast<int>(track_h), BAR_IDLE);
     }
 
     y += btn_sz + pad * 0.75f;
@@ -313,20 +306,20 @@ void Renderer::render_sidebar(float volume, float dpi) {
     std::snprintf(sens_text_dpi, sizeof(sens_text_dpi), "%.2f", dpi_scale_mult);
     const float val_x_dpi = pad + btn_sz * 2 + btn_gap * 2;
 
-    DrawText(sens_text_dpi, static_cast<int>(val_x_dpi), static_cast<int>(y + (btn_sz - bfs) / 2.0f),
-             bfs, TEXT_BRIGHT);
+    DrawText(sens_text_dpi, static_cast<int>(val_x_dpi),
+             static_cast<int>(y + (btn_sz - bfs) / 2.0f), bfs, TEXT_BRIGHT);
 
     const float track_x_dpi = val_x_dpi + MeasureText(sens_text_dpi, bfs) + 8.0f * dpi;
     const float track_w_dpi = sw - pad - track_x_dpi;
     const float track_y_dpi = y + btn_sz / 2.0f - BAR_H * dpi / 2.0f;
     const float track_h_dpi = BAR_H * dpi;
 
-    if (track_w > 12.0f * dpi) {
+    if (track_w_dpi > 12.0f * dpi) {
         DrawRectangle(static_cast<int>(track_x_dpi), static_cast<int>(track_y_dpi),
                       static_cast<int>(track_w_dpi), static_cast<int>(track_h_dpi), BAR_TRACK);
-        float fill_w_dpi = track_w * (dpi_scale_mult / 100.0f);
+        float fill_w_dpi = track_w_dpi * (dpi_scale_mult / 3.0f);
         DrawRectangle(static_cast<int>(track_x_dpi), static_cast<int>(track_y_dpi),
-                      static_cast<int>(fill_w_dpi), static_cast<int>(track_h_dpi), BAR_IDLE);
+                      static_cast<int>(fill_w_dpi),  static_cast<int>(track_h_dpi), BAR_IDLE);
     }
 
     y += btn_sz + pad * 0.75f;
@@ -346,10 +339,8 @@ void Renderer::render_sidebar(float volume, float dpi) {
         lfs, TIP_COLOR);
 }
 
-void Renderer::render_menubar(float dpi, MenuBar& menuBar, AssetManager& assets,
-                               SpriteEditor& spriteEditor, ShaderEditor& shaderEditor)
-{
-    const int   sw = GetScreenWidth();
+void Renderer::render_menubar(float dpi, MenuBar& menuBar, AssetManager& assets, SpriteEditor& spriteEditor, ShaderEditor& shaderEditor) {
+    const int sw = GetScreenWidth();
     const float mh = MENUBAR_H * dpi;
 
     DrawRectangle(0, 0, sw, static_cast<int>(mh), BG_MENUBAR);
@@ -357,15 +348,16 @@ void Renderer::render_menubar(float dpi, MenuBar& menuBar, AssetManager& assets,
 
     MenuBarAction action = menuBar.draw();
 
-    if (action.openIdleEditor)    spriteEditor.open_window(AvatarState::IDLE);
-    if (action.openTalkEditor)    spriteEditor.open_window(AvatarState::TALKING);
-    if (action.openScreamEditor)  spriteEditor.open_window(AvatarState::SCREAMING);
-    if (spriteEditor.is_open())   spriteEditor.draw(assets);
+    if (action.openIdleEditor) spriteEditor.open_window(AvatarState::IDLE);
+    if (action.openTalkEditor) spriteEditor.open_window(AvatarState::TALKING);
+    if (action.openScreamEditor) spriteEditor.open_window(AvatarState::SCREAMING);
+    if (spriteEditor.is_open()) spriteEditor.draw(assets, dpi);
 
-    if (action.openShaderEditor)  shaderEditor.open_window();
-    if (shaderEditor.is_open())   shaderEditor.draw();
+    if (action.openShaderEditor) shaderEditor.open_window();
+    if (shaderEditor.is_open()) shaderEditor.draw(dpi);
 
-    if (action.openShakeSettings) show_shake_settings = !show_shake_settings;
+    if (action.openShakeSettings) shakeSettings.toggle();
+    if (shakeSettings.is_open()) shakeSettings.draw(dpi);
 }
 
 void Renderer::render_ui(float volume) {
@@ -377,13 +369,13 @@ void Renderer::render_ui(float volume) {
 bool Renderer::render_button(Rectangle bounds, const char* text, float dpi) {
     if (!is_ui_visible) return false;
 
-    Vector2 mouse   = GetMousePosition();
-    bool    hovered = CheckCollisionPointRec(mouse, bounds);
-    bool    pressed = false;
+    Vector2 mouse = GetMousePosition();
+    bool hovered = CheckCollisionPointRec(mouse, bounds);
+    bool pressed = false;
 
     Color col = hovered ? BTN_HOVER : BTN_NORMAL;
     if (hovered && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-        col     = BTN_PRESSED;
+        col = BTN_PRESSED;
         pressed = true;
         is_anything_pressed = true;
     }
@@ -430,16 +422,16 @@ void Renderer::set_avatar_state(AvatarState state) {
     current_state = state;
 
     switch (state) {
-        case AvatarState::IDLE:      anim.set_max_frames(idle_max_frames);   break;
-        case AvatarState::TALKING:   anim.set_max_frames(talk_max_frames);   break;
+        case AvatarState::IDLE: anim.set_max_frames(idle_max_frames); break;
+        case AvatarState::TALKING: anim.set_max_frames(talk_max_frames); break;
         case AvatarState::SCREAMING: anim.set_max_frames(scream_max_frames); break;
     }
     anim.reset_frame();
 }
 
 void Renderer::set_max_frames(int idle_max, int talk_max, int scream_max) {
-    const bool changed = (idle_max_frames  != idle_max)  ||
-                         (talk_max_frames  != talk_max)  ||
+    const bool changed = (idle_max_frames != idle_max) ||
+                         (talk_max_frames != talk_max) ||
                          (scream_max_frames != scream_max);
 
     idle_max_frames   = idle_max;
@@ -448,8 +440,8 @@ void Renderer::set_max_frames(int idle_max, int talk_max, int scream_max) {
 
     if (changed) {
         switch (current_state) {
-            case AvatarState::IDLE:      anim.set_max_frames(idle_max_frames);   break;
-            case AvatarState::TALKING:   anim.set_max_frames(talk_max_frames);   break;
+            case AvatarState::IDLE: anim.set_max_frames(idle_max_frames); break;
+            case AvatarState::TALKING: anim.set_max_frames(talk_max_frames); break;
             case AvatarState::SCREAMING: anim.set_max_frames(scream_max_frames); break;
         }
     }
@@ -460,8 +452,7 @@ void Renderer::set_window_title(const std::string& title) {
     if (IsWindowReady()) SetWindowTitle(window_title.c_str());
 }
 
-void Renderer::update(AssetManager& assets, float volume, MenuBar& menuBar,
-                       SpriteEditor& spriteEditor, ShaderEditor& shaderEditor, Shake& shake)
+void Renderer::update(AssetManager& assets, float volume, MenuBar& menuBar, SpriteEditor& spriteEditor, ShaderEditor& shaderEditor, Shake& shake)
 {
     const float delta_time = Utils::get_delta_time();
 
@@ -471,8 +462,12 @@ void Renderer::update(AssetManager& assets, float volume, MenuBar& menuBar,
 
     Rectangle avatar_rect = calculate_avatar_rect(400);
 
-    if (!spriteEditor.is_open() && !show_shake_settings)
+    if (!spriteEditor.is_open() &&
+        !shakeSettings.is_open() &&
+        !shaderEditor.is_open())
+    {
         handle_mouse_drag(avatar_rect);
+    }
 
     BeginDrawing();
 
@@ -484,8 +479,6 @@ void Renderer::update(AssetManager& assets, float volume, MenuBar& menuBar,
 
         render_ui(volume);
         render_menubar(last_dpi_scale, menuBar, assets, spriteEditor, shaderEditor);
-
-        if (show_shake_settings) draw_shake_settings();
     } else {
         ClearBackground({ 0, 0, 0, 0 });
         const Vector2 shakeOffset = shake.get_offset();
@@ -520,71 +513,6 @@ void Renderer::update_dpi_scale(float delta_time) {
 
 void Renderer::update_animation(float delta_time) {
     anim.update(delta_time);
-}
-
-void Renderer::draw_shake_settings() {
-    if (!show_shake_settings) return;
-
-    Config& cfg  = ConfigManager::get();
-    Vector2 mouse = GetMousePosition();
-
-    float x = windowRect.x, y = windowRect.y;
-    float w = windowRect.width, h = windowRect.height;
-
-    Rectangle headerRect = { x, y, w, 30.0f };
-
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mouse, headerRect)) {
-        isDragging = true;
-        dragOffset = { mouse.x - x, mouse.y - y };
-    }
-    if (isDragging) {
-        windowRect.x = mouse.x - dragOffset.x;
-        windowRect.y = mouse.y - dragOffset.y;
-        x = windowRect.x; y = windowRect.y;
-        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) isDragging = false;
-    }
-
-    DrawRectangleRec({ x, y, w, h }, { 28, 28, 32, 255 });
-    DrawRectangleLinesEx({ x, y, w, h }, 0.5f, { 90, 90, 100, 255 });
-    DrawRectangleRec(headerRect, isDragging ? Color{60,60,70,255} : Color{45,45,50,255});
-    DrawText("Shake Settings", static_cast<int>(x + 14.0f), static_cast<int>(y + 6.0f), 18, RAYWHITE);
-
-    if (render_button({ x + w - 30.0f, y + 4.0f, 22.0f, 22.0f }, "X", 1.0f)) {
-        show_shake_settings = false;
-        return;
-    }
-
-    DrawText("Strength", static_cast<int>(x + 14.0f), static_cast<int>(y + 52.0f), 16, TEXT_MID);
-    if (render_button({ x + 120.0f, y + 48.0f, 28.0f, 24.0f }, "-", 1.0f))
-        { cfg.shakeStrength = std::max(0.0f, cfg.shakeStrength - 0.5f); ConfigManager::save(); }
-    if (render_button({ x + 152.0f, y + 48.0f, 28.0f, 24.0f }, "+", 1.0f))
-        { cfg.shakeStrength += 0.5f; ConfigManager::save(); }
-    DrawText(TextFormat("%.2f", cfg.shakeStrength),
-             static_cast<int>(x + 190.0f), static_cast<int>(y + 50.0f), 16, LIGHTGRAY);
-
-    DrawText("Duration", static_cast<int>(x + 14.0f), static_cast<int>(y + 88.0f), 16, TEXT_MID);
-    if (render_button({ x + 120.0f, y + 84.0f, 28.0f, 24.0f }, "-", 1.0f))
-        { cfg.shakeDuration = std::max(0.0f, cfg.shakeDuration - 0.05f); ConfigManager::save(); }
-    if (render_button({ x + 152.0f, y + 84.0f, 28.0f, 24.0f }, "+", 1.0f))
-        { cfg.shakeDuration += 0.05f; ConfigManager::save(); }
-    DrawText(TextFormat("%.2f", cfg.shakeDuration),
-             static_cast<int>(x + 190.0f), static_cast<int>(y + 86.0f), 16, LIGHTGRAY);
-
-    DrawText("Mode", static_cast<int>(x + 14.0f), static_cast<int>(y + 124.0f), 16, TEXT_MID);
-
-    if (render_button({ x + 120.0f, y + 120.0f, 40.0f, 24.0f }, "X",
-            cfg.shakeMode == Config::ShakeMode::X))
-        { cfg.shakeMode = Config::ShakeMode::X; ConfigManager::save(); }
-    if (render_button({ x + 166.0f, y + 120.0f, 40.0f, 24.0f }, "Y",
-            cfg.shakeMode == Config::ShakeMode::Y))
-        { cfg.shakeMode = Config::ShakeMode::Y; ConfigManager::save(); }
-    if (render_button({ x + 212.0f, y + 120.0f, 60.0f, 24.0f }, "X+Y",
-            cfg.shakeMode == Config::ShakeMode::XY))
-        { cfg.shakeMode = Config::ShakeMode::XY; ConfigManager::save(); }
-
-    DrawText("Triggered on state change.",
-             static_cast<int>(x + 14.0f), static_cast<int>(y + 168.0f),
-             13, { 140, 140, 150, 255 });
 }
 
 bool Renderer::should_close() const { return WindowShouldClose(); }

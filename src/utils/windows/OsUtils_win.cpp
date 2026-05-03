@@ -176,11 +176,23 @@ namespace OsUtilsWin {
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
 
-    bool open_file_dialog(void* /*unused*/, std::string& outPath) {
+    bool open_file_dialog(void*, std::string& outPath, std::string type) {
         nfdchar_t* outPathC = nullptr;
-        nfdfilteritem_t filters[] = { { "Image Files", "png,jpg,jpeg,bmp,tga" } };
-        
-        nfdresult_t result = NFD_OpenDialog(&outPathC, filters, 1, nullptr);
+        nfdfilteritem_t* filters = nullptr;
+        nfdfiltersize_t filterCount = 0;
+
+        nfdfilteritem_t shaderFilters[] = { { "Shader Files", "frag,fs,glsl" } };
+        nfdfilteritem_t imageFilters[] = { { "Image Files", "png,jpg,jpeg,bmp,tga" } };
+
+        if (type == "Shaders") {
+            filters = shaderFilters;
+            filterCount = 1;
+        } else if (type == "Images") {
+            filters = imageFilters;
+            filterCount = 1;
+        }
+
+        nfdresult_t result = NFD_OpenDialog(&outPathC, filters, filterCount, nullptr);
         
         if (result == NFD_OKAY) {
             outPath = outPathC;

@@ -18,7 +18,7 @@ private:
     float strength = 0.0f;
 
     Config::ShakeMode mode = Config::ShakeMode::XY;
-    Vector2 offset = {0.0f, 0.0f};
+    Vector2 offset = { 0.0f, 0.0f };
 
-    float random_01();
+    static float random_01();
 };

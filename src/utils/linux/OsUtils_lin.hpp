@@ -19,6 +19,6 @@ namespace OsUtilsLin {
     bool is_key_down_global(int raylibKey);
     bool is_shift_pressed_global();
 
-    bool open_file_dialog(void* nativeHandle, std::string& outPath);
+    bool open_file_dialog(void* nativeHandle, std::string& outPath, std::string type);
     std::string get_appdata_path();
 }

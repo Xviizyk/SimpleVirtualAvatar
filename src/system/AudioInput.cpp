@@ -2,8 +2,7 @@
 #include <iostream>
 #include <cmath>
 
-void AudioInput::data_callback(ma_device* device, void* output, const void* input, ma_uint32 frameCount) {
-    (void)output;
+void AudioInput::data_callback(ma_device* device, void* /*output*/, const void* input, ma_uint32 frameCount) {
     AudioInput* self = static_cast<AudioInput*>(device->pUserData);
     if (!input) return;
 

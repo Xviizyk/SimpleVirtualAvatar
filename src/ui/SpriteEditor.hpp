@@ -1,38 +1,41 @@
 #pragma once
 
 #include "../system/AssetManager.hpp"
-#include "../core/Config.hpp"
+#include "raylib.h"
+#include <filesystem>
+#include <string>
+
+class AssetManager;
 
 class SpriteEditor {
 public:
     void open_window(AvatarState state);
     bool is_open() const;
 
-    void draw(AssetManager& assets);
-
-private:
-    Rectangle windowRect = { 100, 100, 600, 400 };
-    bool isDragging = false;
-    bool isResizing = false;
-    Vector2 dragOffset = { 0, 0 };
-    const float RESIZE_BORDER = 10.0f;
+    void draw(AssetManager& assets, float dpi);
 
     bool open = false;
-    bool editingBlink = false;
-    AvatarState editingState = AvatarState::IDLE;
-    int pendingFrames = 1;
+    bool isDragging = false;
 
-    static constexpr int MAX_FRAMES = 32;
+    int pendingFrames = 1;
+private:
+    AvatarState editingState = AvatarState::IDLE;
+    bool editingBlink = false;
+
+    Rectangle windowRect = { 120.0f, 120.0f, 420.0f, 300.0f };
+    Vector2 dragOffset { 0.0f, 0.0f};
+    static constexpr int MAX_FRAMES = 64;
     static constexpr int COLUMNS = 4;
 
     int& frame_count_ref();
     const char* state_name() const;
     const char* prefix() const;
+
     std::filesystem::path frame_path(int index) const;
 
     void sync_from_config();
     void sync_to_config_and_reload(AssetManager& assets);
-    bool assign_image_to_slot(int index, const std::string& sourcePath, AssetManager& assets);
 
     bool open_file_dialog(std::string& outPath) const;
+    bool assign_image_to_slot(int index, const std::string& sourcePath, AssetManager& assets);
 };
