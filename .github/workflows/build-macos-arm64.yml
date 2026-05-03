@@ -32,6 +32,6 @@ jobs:
         with:
           name: SimpleVAvatar-macos-arm64
           path: |
-            build/SimpleVirtualAvatar
-            build/SimpleVirtualAvatar.app
+            build/SimpleVirtualAvatar*
+            build/SimpleVirtualAvatar*.app
           if-no-files-found: warn
