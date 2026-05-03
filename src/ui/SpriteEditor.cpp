@@ -119,11 +119,11 @@ void SpriteEditor::draw(AssetManager& assets, float dpi) {
 
     Vector2 mouse = GetMousePosition();
 
-    Rectangle headerRect = { windowRect.x, windowRect.y, windowRect.width, 30.0f * s };
+    Rectangle headerRect = { windowRect.x * s, windowRect.y * s, windowRect.width, 30.0f * s };
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mouse, headerRect)) {
         isDragging = true;
-        dragOffset = { mouse.x - windowRect.x, mouse.y - windowRect.y };
+        dragOffset = { mouse.x - windowRect.x * s, mouse.y - windowRect.y * s };
     }
 
     if (isDragging) {
@@ -132,9 +132,9 @@ void SpriteEditor::draw(AssetManager& assets, float dpi) {
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) isDragging = false;
     }
 
-    const float panelX = windowRect.x;
-    const float panelY = windowRect.y;
-    const float panelW = windowRect.width;
+    const float panelX = windowRect.x * s;
+    const float panelY = windowRect.y * s;
+    const float panelW = windowRect.width * s;
 
     const float slotW = (panelW - 30.0f * s) / static_cast<float>(COLUMNS);
     const float slotH = 68.0f * s;
