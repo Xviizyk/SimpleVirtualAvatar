@@ -77,7 +77,7 @@ message(STATUS "")
 #  Project declaration
 # ──────────────────────────────────────────────────────────────────────────────
 project(SimpleVirtualAvatar
-    VERSION     2.2.0
+    VERSION     3.1.0
     LANGUAGES   C CXX
     DESCRIPTION "A simple virtual avatar rendering engine"
 )
@@ -87,6 +87,20 @@ if(WIN32)
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     endif()
 endif()
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  Set project's name for different versions and OS
+# ──────────────────────────────────────────────────────────────────────────────
+set(OS_NAME ${CMAKE_SYSTEM_NAME})
+
+set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
+if(MSVC)
+    if(ARCH STREQUAL "AMD64")
+        set(ARCH "x64")
+    endif()
+endif()
+
+set(PROJECT_NAME_BIN "${PROJECT_NAME}-${PROJECT_VERSION}-${OS_NAME}-${ARCH}")
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Global standards & guards
@@ -208,6 +222,9 @@ endif()
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
+set_target_properties(${PROJECT_NAME} PROPERTIES 
+    OUTPUT_NAME "${PROJECT_NAME_BIN}"
+)
 # ──────────────────────────────────────────────────────────────────────────────
 #  Include paths
 # ──────────────────────────────────────────────────────────────────────────────
