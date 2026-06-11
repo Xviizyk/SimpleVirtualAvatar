@@ -144,6 +144,11 @@ include(cmake/CPM.cmake)
 CPMAddPackage("gh:btzy/nativefiledialog-extended@1.3.0")
 CPMAddPackage("gh:raysan5/raylib#6.0")
 CPMAddPackage("gh:mackron/miniaudio#0.11.25")
+COMAddPackage("gh:ggerganov/whisper.cpp@1.7.2")
+CPMAddPackage("gh:ggerganov/llama.cpp#b3447")
+
+#OPTIONS "WHISPER_BUILD_TESTS OFF" "WHISPER_BUILD_EXAMPLES OFF"
+#OPTIONS "LLAMA_BUILD_TESTS OFF" "LLAMA_BUILD_EXAMPLES OFF"
 
 set(OSUTILS_SOURCES
     src/utils/OsUtils.cpp
@@ -345,6 +350,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     raylib
     nfd
     OsUtils
+    whisper
+    llama
 )
 
 # ──────────────────────────────────────────────────────────────────────────────

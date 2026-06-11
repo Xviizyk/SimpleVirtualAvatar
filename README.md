@@ -95,7 +95,6 @@ You can customize audio thresholds, shake effects, and file paths directly in th
 ## 📊 Build Options
 
 Toggle advanced features via CMake flags:
-*   `-DENABLE_TRACY=ON`: Enable integration with the Tracy Profiler (development only).
 *   `-DCROSS_COMPILE_ARM64=ON`: Optimize for ARM64 architectures.
 
 ---
